@@ -2,8 +2,8 @@ package app
 
 import (
 	"github.com/gin-gonic/gin"
+	"lightweight-netflix/pkg/api"
 	"log"
-	"weight-tracker/pkg/api"
 )
 
 type Server struct {

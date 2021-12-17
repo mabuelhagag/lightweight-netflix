@@ -2,9 +2,9 @@ package api_test
 
 import (
 	"errors"
+	"lightweight-netflix/pkg/api"
 	"reflect"
 	"testing"
-	"weight-tracker/pkg/api"
 )
 
 type mockWeightRepo struct{}

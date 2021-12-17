@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"lightweight-netflix/pkg/api"
+	"lightweight-netflix/pkg/app"
+	"lightweight-netflix/pkg/repository"
 	"os"
-	"weight-tracker/pkg/api"
-	"weight-tracker/pkg/app"
-	"weight-tracker/pkg/repository"
 )
 
 func main() {

@@ -1,9 +1,9 @@
 package app
 
 import (
+	"lightweight-netflix/pkg/api"
 	"log"
 	"net/http"
-	"weight-tracker/pkg/api"
 
 	"github.com/gin-gonic/gin"
 )

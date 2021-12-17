@@ -1,4 +1,4 @@
-module weight-tracker
+module lightweight-netflix
 
 go 1.15
 
