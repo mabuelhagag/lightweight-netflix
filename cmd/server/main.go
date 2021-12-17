@@ -23,7 +23,11 @@ func run() error {
 	// I'm used to working with postgres feel free to use any db you would like
 	// I'm not going to cover how to create a database here but create a database
 	// and call it something along the lines of "weight tracker"
-	connectionString := "postgres://postgres:postgres@localhost/**NAME-OF-YOUR-DATABASE-HERE**?sslmode=disable"
+	DBUsername := os.Getenv("POSTGRES_USER")
+	DBPassword := os.Getenv("POSTGRES_PASSWORD")
+	DB := os.Getenv("POSTGRES_DB")
+
+	connectionString := fmt.Sprintf("postgres://%s:%s@db/%s?sslmode=disable", DBUsername, DBPassword, DB)
 
 	// setup database connection
 	db, err := setupDatabase(connectionString)

@@ -1,0 +1,29 @@
+# Source: https://medium.com/@krishnaregmi/wait-for-it-docker-compose-f0bac30f3357
+
+version: '3'
+services:
+  db:
+    image: postgres:14.1-alpine
+    env_file:
+      - .envs/.db
+    ports:
+      - '5432:5432'
+    volumes:
+      - db_data:/var/lib/postgresql/data
+  api:
+    build:
+      context: .
+      dockerfile: compose/Dockerfile
+    image: lightweight-netflix
+    env_file:
+      - .envs/.db
+      - .envs/.api
+    depends_on:
+      - db
+    ports:
+      - '8080:8080'
+    command:
+      - 'server'
+
+volumes:
+  db_data:
