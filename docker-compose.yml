@@ -3,13 +3,24 @@
 version: '3'
 services:
   db:
-    image: postgres:14.1-alpine
+    image: mongo
+    restart: unless-stopped
     env_file:
       - .envs/.db
-    ports:
-      - '5432:5432'
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - db_data:/data/db
+      - ./compose/db_init.js:/docker-entrypoint-initdb.d/db_init.js
+  mongo-express:
+    image: mongo-express
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=db
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=mongoadmin
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=secret
+    depends_on:
+      - db
   api:
     build:
       context: .
