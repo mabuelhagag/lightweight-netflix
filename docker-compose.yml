@@ -31,10 +31,14 @@ services:
       - .envs/.api
     depends_on:
       - db
+    security_opt:
+      - "seccomp:unconfined"
+    cap_add:
+      - SYS_PTRACE
     ports:
-      - '8080:8080'
-    command:
-      - 'server'
+      - "8080:8080"
+      - "40000:40000"
+    command: /dlv --headless --listen=:40000 --api-version=2 exec /server
 
 volumes:
   db_data:

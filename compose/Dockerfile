@@ -1,24 +1,25 @@
-FROM golang:1.17.5-bullseye
+# https://blog.jetbrains.com/go/2020/05/08/running-go-applications-using-docker-compose-in-goland/
 
+# Compile stage
+FROM golang:1.17.5-bullseye AS build-env
 
-RUN addgroup --system go && \
-    adduser --system --ingroup go --home /opt/project go
+# Build Delve
+RUN go get github.com/go-delve/delve/cmd/dlv
 
-COPY --chown=go:go ./compose/entrypoint /entrypoint
-RUN sed -i 's/\r//' /entrypoint \
-    && chmod +x /entrypoint
+ADD . /dockerdev
+WORKDIR /dockerdev
 
+# Compile the application with the optimizations turned off
+# This is important for the debugger to correctly work with the binary
+RUN go build -gcflags "all=-N -l" -o /server ./cmd/server
 
-ADD --chown=go:go https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh /wait-for-it.sh
-RUN chmod +x /wait-for-it.sh
+# Final stage
+FROM debian:bullseye
 
-COPY --chown=go:go . /opt/project
+EXPOSE 8000 40000
 
-USER go
-WORKDIR /opt/project
+WORKDIR /
+COPY --from=build-env /go/bin/dlv /
+COPY --from=build-env /server /
 
-RUN go get -d -v ./...
-RUN go install -v ./...
-
-EXPOSE 8080
-ENTRYPOINT ["/entrypoint"]
+CMD ["/dlv", "--listen=:40000", "--headless=true", "--api-version=2", "--accept-multiclient", "exec", "/server"]
