@@ -14,7 +14,7 @@ func (s *Server) ApiStatus() gin.HandlerFunc {
 
 		response := map[string]string{
 			"status": "success",
-			"data":   "weight tracker API running smoothly",
+			"data":   "Lightweight Netflix API is running smoothly",
 		}
 
 		c.JSON(http.StatusOK, response)
