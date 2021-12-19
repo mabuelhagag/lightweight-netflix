@@ -1,10 +1,12 @@
 package main
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"lightweight-netflix/pkg/api"
 	"lightweight-netflix/pkg/app"
 	"lightweight-netflix/pkg/repository"
@@ -20,25 +22,14 @@ func main() {
 
 // func run will be responsible for setting up db connections, routers etc
 func run() error {
-	// I'm used to working with postgres feel free to use any db you would like
-	// I'm not going to cover how to create a database here but create a database
-	// and call it something along the lines of "weight tracker"
-	DBUsername := os.Getenv("POSTGRES_USER")
-	DBPassword := os.Getenv("POSTGRES_PASSWORD")
-	DB := os.Getenv("POSTGRES_DB")
-
-	connectionString := fmt.Sprintf("postgres://%s:%s@db/%s?sslmode=disable", DBUsername, DBPassword, DB)
-
 	// setup database connection
-	db, err := setupDatabase(connectionString)
+	db, err := setupDatabase()
 	if err != nil {
 		return err
 	}
 
 	// create storage dependency
 	storage := repository.NewStorage(db)
-
-	err = storage.RunMigrations(connectionString)
 
 	if err != nil {
 		return err
@@ -66,20 +57,22 @@ func run() error {
 	return nil
 }
 
-func setupDatabase(connString string) (*sql.DB, error) {
-	// change "postgres" for whatever supported database you want to use
-	db, err := sql.Open("postgres", connString)
+func setupDatabase() (*mongo.Database, error) {
+	DBUsername := os.Getenv("MONGO_INITDB_DATABASE")
+	DBPassword := os.Getenv("MONGO_INITDB_ROOT_PASSWORD")
+	DB := os.Getenv("MONGO_INITDB_DATABASE")
 
+	uri := fmt.Sprintf("mongodb://%s:%s@db:27017", DBUsername, DBPassword)
+
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-
-	// ping the DB to ensure that it is connected
-	err = db.Ping()
-
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil
+	defer func() {
+		if err := client.Disconnect(context.TODO()); err != nil {
+			panic(err)
+		}
+	}()
+	db := client.Database(DB)
+	return db, err
 }

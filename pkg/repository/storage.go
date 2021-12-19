@@ -1,30 +1,33 @@
 package repository
 
 import (
-	"database/sql"
-	"errors"
-	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
-	_ "github.com/lib/pq"
+	"context"
+	"fmt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 	"lightweight-netflix/pkg/api"
 	"log"
-	"path/filepath"
-	"runtime"
 )
 
 type Storage interface {
-	RunMigrations(connectionString string) error
 	CreateUser(request api.NewUserRequest) error
 	CreateWeightEntry(request api.Weight) error
 	GetUser(userID int) (api.User, error)
 }
 
 type storage struct {
-	db *sql.DB
+	db *mongo.Database
 }
 
-func NewStorage(db *sql.DB) Storage {
+type user struct {
+	ID       primitive.ObjectID `bson:"_id,omitempty"`
+	FullName string             `bson:"fullName,omitempty"`
+	Email    string             `bson:"email,omitempty"`
+	Age      uint8              `bson:"age,omitempty"`
+	Password string             `bson:"password,omitempty"`
+}
+
+func NewStorage(db *mongo.Database) Storage {
 	return &storage{db: db}
 }
 
