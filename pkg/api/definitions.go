@@ -16,13 +16,11 @@ type User struct {
 }
 
 type NewUserRequest struct {
-	Name          string `json:"name"`
-	Age           int    `json:"age"`
-	Height        int    `json:"height"`
-	Sex           string `json:"sex"`
-	ActivityLevel int    `json:"activity_level"`
-	WeightGoal    string `json:"weight_goal"`
-	Email         string `json:"email"`
+	FullName             string `json:"full_name"`
+	Age                  uint8  `json:"age"`
+	Email                string `json:"email"`
+	Password             string `json:password`
+	PasswordConfirmation string `json:password_confirmation`
 }
 
 type UpdateActivityLevelRequest struct {

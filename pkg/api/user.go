@@ -23,23 +23,23 @@ func NewUserService(userRepo UserRepository) UserService {
 	return &userService{storage: userRepo}
 }
 
-// TODO: note that we are not checking if the user already exists - we probably should not the article will be too long
 func (u *userService) New(user NewUserRequest) error {
+	// sanitize fields
+	//fullName := strings.TrimSpace(user.FullName)
+	//email := strings.TrimSpace(strings.ToLower(user.Email))
+	// age,_ := strconv.ParseUint(user.Age)
 	// do some basic validations
+
 	if user.Email == "" {
 		return errors.New("user service - email required")
 	}
 
-	if user.Name == "" {
+	if user.FullName == "" {
 		return errors.New("user service - name required")
 	}
 
-	if user.WeightGoal == "" {
-		return errors.New("user service - weight goal required")
-	}
-
 	// do some basic normalisation
-	user.Name = strings.ToLower(user.Name)
+	user.FullName = strings.ToLower(user.FullName)
 	user.Email = strings.TrimSpace(user.Email)
 
 	err := u.storage.CreateUser(user)

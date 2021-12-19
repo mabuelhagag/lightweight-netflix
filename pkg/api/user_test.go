@@ -10,7 +10,7 @@ import (
 type mockUserRepo struct{}
 
 func (m mockUserRepo) CreateUser(request api.NewUserRequest) error {
-	if request.Name == "test user already created" {
+	if request.FullName == "test user already created" {
 		return errors.New("repository - user already exists in database")
 	}
 
@@ -31,40 +31,24 @@ func TestCreateNewUser(t *testing.T) {
 		want    error
 	}{
 		{name: "should create a new user successfully", request: api.NewUserRequest{
-			Name:          "test user",
-			WeightGoal:    "maintain",
-			Age:           20,
-			Height:        180,
-			Sex:           "female",
-			ActivityLevel: 5,
-			Email:         "test_user@gmail.com",
+			FullName: "test user",
+			Age:      20,
+			Email:    "test_user@gmail.com",
 		}, want: nil},
 		{name: "should return an error because of missing email", request: api.NewUserRequest{
-			Name:          "test user",
-			Age:           20,
-			WeightGoal:    "maintain",
-			Height:        180,
-			Sex:           "female",
-			ActivityLevel: 5,
-			Email:         "",
+			FullName: "test user",
+			Age:      20,
+			Email:    "",
 		}, want: errors.New("user service - email required")},
 		{name: "should return an error because of missing name", request: api.NewUserRequest{
-			Name:          "",
-			Age:           20,
-			WeightGoal:    "maintain",
-			Height:        180,
-			Sex:           "female",
-			ActivityLevel: 5,
-			Email:         "test_user@gmail.com",
+			FullName: "",
+			Age:      20,
+			Email:    "test_user@gmail.com",
 		}, want: errors.New("user service - name required")},
 		{name: "should return error from database because user already exists", request: api.NewUserRequest{
-			Name:          "test user already created",
-			Age:           20,
-			Height:        180,
-			WeightGoal:    "maintain",
-			Sex:           "female",
-			ActivityLevel: 5,
-			Email:         "test_user@gmail.com",
+			FullName: "test user already created",
+			Age:      20,
+			Email:    "test_user@gmail.com",
 		}, want: errors.New("repository - user already exists in database")},
 	}
 
