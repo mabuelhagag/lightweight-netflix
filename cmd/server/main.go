@@ -43,9 +43,9 @@ func run() error {
 	userService := api.NewUserService(storage)
 
 	// create weight service
-	weightService := api.NewWeightService(storage)
+	//weightService := api.NewWeightService(storage)
 
-	server := app.NewServer(router, userService, weightService)
+	server := app.NewServer(router, userService)
 
 	// start the server
 	err = server.Run()

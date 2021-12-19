@@ -11,8 +11,6 @@ import (
 
 type Storage interface {
 	CreateUser(request api.NewUserRequest) error
-	CreateWeightEntry(request api.Weight) error
-	GetUser(userID int) (api.User, error)
 }
 
 type storage struct {
@@ -29,32 +27,6 @@ type user struct {
 
 func NewStorage(db *mongo.Database) Storage {
 	return &storage{db: db}
-}
-
-func (s *storage) RunMigrations(connectionString string) error {
-	if connectionString == "" {
-		return errors.New("repository: the connString was empty")
-	}
-	// get base path
-	_, b, _, _ := runtime.Caller(0)
-	basePath := filepath.Join(filepath.Dir(b), "../..")
-
-	migrationsPath := filepath.Join("file://", basePath, "/pkg/repository/migrations/")
-
-	m, err := migrate.New(migrationsPath, connectionString)
-
-	if err != nil {
-		return err
-	}
-
-	err = m.Up()
-
-	switch err {
-	case errors.New("no change"):
-		return nil
-	}
-
-	return nil
 }
 
 func (s *storage) CreateUser(request api.NewUserRequest) error {

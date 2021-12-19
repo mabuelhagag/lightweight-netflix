@@ -12,11 +12,10 @@ type Server struct {
 	weightService api.WeightService
 }
 
-func NewServer(router *gin.Engine, userService api.UserService, weightService api.WeightService) *Server {
+func NewServer(router *gin.Engine, userService api.UserService) *Server {
 	return &Server{
-		router:        router,
-		userService:   userService,
-		weightService: weightService,
+		router:      router,
+		userService: userService,
 	}
 }
 
