@@ -3,8 +3,8 @@ package app
 import (
 	"context"
 	"go-app/configs"
-	"go-app/repositories/bookrepo"
-	"go-app/services/bookservice"
+	"go-app/repositories/userrepo"
+	"go-app/services/userservice"
 	"log"
 	"net/http"
 
@@ -43,15 +43,15 @@ func Run() {
 	/*
 		====== Setup repositories =======
 	*/
-	bookRepo := bookrepo.NewBookRepo(mongoDB)
+	userRepo := userrepo.NewUserRepo(mongoDB)
 	/*
 		====== Setup services ===========
 	*/
-	bookService := bookservice.NewBookService(bookRepo)
+	userService := userservice.NewUserService(userRepo)
 	/*
 		====== Setup controllers ========
 	*/
-	bookCtl := controllers.NewBookController(bookService)
+	userCtl := controllers.NewUserController(userService)
 
 	/*
 		======== Routes ============
@@ -65,8 +65,8 @@ func Run() {
 	})
 
 	/*
-		===== Book Routes =====
+		===== User Routes =====
 	*/
-	r.POST("/books", bookCtl.PostBook)
+	r.POST("/users", userCtl.RegisterUser)
 	r.Run()
 }
