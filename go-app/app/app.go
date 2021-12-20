@@ -68,5 +68,9 @@ func Run() {
 		===== User Routes =====
 	*/
 	r.POST("/users", userCtl.RegisterUser)
-	r.Run()
+
+	err = r.Run()
+	if err != nil {
+		panic(err)
+	}
 }
