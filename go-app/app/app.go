@@ -4,7 +4,6 @@ import (
 	"context"
 	"go-app/configs"
 	"go-app/repositories/userrepo"
-	"go-app/services/userservice"
 	"log"
 	"net/http"
 
@@ -44,14 +43,11 @@ func Run() {
 		====== Setup repositories =======
 	*/
 	userRepo := userrepo.NewUserRepo(mongoDB)
-	/*
-		====== Setup services ===========
-	*/
-	userService := userservice.NewUserService(userRepo)
+
 	/*
 		====== Setup controllers ========
 	*/
-	userCtl := controllers.NewUserController(userService)
+	userCtl := controllers.NewUserController(userRepo)
 
 	/*
 		======== Routes ============
@@ -67,7 +63,7 @@ func Run() {
 	/*
 		===== User Routes =====
 	*/
-	r.POST("/users", userCtl.RegisterUser)
+	r.POST("/users/register/", userCtl.RegisterUser)
 
 	err = r.Run()
 	if err != nil {
