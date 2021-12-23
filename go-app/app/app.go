@@ -64,13 +64,26 @@ func Run() {
 	/*
 		===== User Routes =====
 	*/
+
+	authorized := func(c *gin.Context) {
+		controllers.HTTPRes(c, http.StatusOK, "Authorized", nil)
+	}
+
 	r.POST("/users/register/", userCtl.RegisterUser)
 	r.POST("/users/login/", userCtl.LoginUser)
 	movies := r.Group("/movies/").Use(middlewares.Authorize())
 	{
-		movies.GET("", func(c *gin.Context) {
-			controllers.HTTPRes(c, http.StatusOK, "Authorized", nil)
-		})
+		movies.GET("", authorized)
+		movies.GET("sort/:by/:direction/", authorized)
+		movies.GET("watched/", authorized)
+		movies.POST("add/", authorized)
+	}
+	movie := r.Group("/movie/").Use(middlewares.Authorize())
+	{
+		movie.GET("info/:id/", authorized)
+		movie.DELETE("info/:id/", authorized)
+		movie.GET("watch/:id/", authorized)
+		movie.POST("review/:id/", authorized)
 	}
 	err = r.Run()
 	if err != nil {
