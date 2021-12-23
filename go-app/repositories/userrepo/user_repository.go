@@ -3,16 +3,17 @@ package userrepo
 import (
 	"context"
 	"errors"
+	"go-app/definitions/user"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 	"time"
-
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // Repo Interface
 type Repo interface {
-	CreateUser(user *User) (*User, error)
+	CreateUser(user *user.User) (*user.User, error)
+	CheckPassword(user *user.LoginInfoInput) error
 }
 
 type userRepo struct {
@@ -26,20 +27,14 @@ func NewUserRepo(db *mongo.Client) Repo {
 	}
 }
 
-// User struct
-type User struct {
-	FullName string `bson:"name"`
-	Age      uint8  `bson:"page_count"`
-	Email    string `bson:"email"`
-	Password string `bson:"password"`
-}
-
-func (b *userRepo) CreateUser(user *User) (*User, error) {
+func (b *userRepo) CreateUser(user *user.User) (*user.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel() // releases resources if CreateUser completes before timeout elapses
 	collection := b.db.Database("lw-netflix").Collection("users")
 	var result bson.M
-	collection.FindOne(context.TODO(), bson.D{{"email", user.Email}}).Decode(&result)
+	if err := collection.FindOne(ctx, bson.D{{"email", user.Email}}).Decode(&result); err != nil {
+		return nil, errors.New("Unable to get user")
+	}
 	if result != nil {
 		return nil, errors.New("User already exists")
 	}
@@ -52,4 +47,21 @@ func (b *userRepo) CreateUser(user *User) (*User, error) {
 		panic(err)
 	}
 	return user, nil
+}
+
+func (b *userRepo) CheckPassword(input *user.LoginInfoInput) (err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel() // releases resources if CreateUser completes before timeout elapses
+
+	collection := b.db.Database("lw-netflix").Collection("users")
+
+	var result user.User
+	err = collection.FindOne(ctx, bson.D{{"email", input.Email}}).Decode(&result)
+	err = bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(input.Password))
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return errors.New("Email and password combination is incorrect")
+		}
+	}
+	return nil
 }

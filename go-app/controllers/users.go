@@ -2,33 +2,20 @@ package controllers
 
 import (
 	"context"
-	"go-app/repositories/userrepo"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/mold/v4/modifiers"
+	userdefinition "go-app/definitions/user"
+	"go-app/repositories/userrepo"
+	"log"
+	"net/http"
 )
-
-// UserOutput represents HTTP Response Body structure
-type UserOutput struct {
-	Name  string `json:"name"`
-	Pages uint   `json:"pages"`
-}
-
-// UserInput represents createUser body format
-type UserInput struct {
-	FullName             string `json:"full_name" mod:"trim" binding:"required"`
-	Age                  uint8  `json:"age" binding:"required,gt=0,lt=100"`
-	Email                string `json:"email" mod:"trim,lcase" binding:"required"`
-	Password             string `json:"password" binding:"required,eqfield=PasswordConfirmation"`
-	PasswordConfirmation string `json:"password_confirmation" binding:"required"`
-}
 
 var conform = modifiers.New()
 
 // UserController interface
 type UserController interface {
 	RegisterUser(*gin.Context)
+	LoginUser(*gin.Context)
 }
 
 type userController struct {
@@ -42,7 +29,7 @@ func NewUserController(br userrepo.Repo) UserController {
 
 func (ctl *userController) RegisterUser(c *gin.Context) {
 	// Read user input
-	var userInput UserInput
+	var userInput userdefinition.UserInput
 	if err := c.ShouldBindJSON(&userInput); err != nil {
 		HTTPRes(c, http.StatusBadRequest, "Error Validation", err.Error())
 		return
@@ -66,16 +53,47 @@ func (ctl *userController) RegisterUser(c *gin.Context) {
 }
 
 // Private Methods
-func (ctl *userController) inputToUser(input UserInput, c *gin.Context) (*userrepo.User, error) {
+func (ctl *userController) inputToUser(input userdefinition.UserInput, c *gin.Context) (*userdefinition.User, error) {
 	if err := conform.Struct(context.Background(), &input); err != nil {
 		HTTPRes(c, http.StatusBadRequest, err.Error(), nil)
 		return nil, err
 	}
 
-	return &userrepo.User{
+	return &userdefinition.User{
 		FullName: input.FullName,
 		Age:      input.Age,
 		Email:    input.Email,
 		Password: input.Password,
 	}, nil
+}
+
+func (ctl *userController) LoginUser(c *gin.Context) {
+	var loginInfoInput userdefinition.LoginInfoInput
+	if err := c.ShouldBindJSON(&loginInfoInput); err != nil {
+		HTTPRes(c, http.StatusBadRequest, "Error Validation", err.Error())
+		return
+	}
+
+	if err := conform.Struct(context.Background(), &loginInfoInput); err != nil {
+		HTTPRes(c, http.StatusBadRequest, "Error Validation", err.Error())
+		return
+	}
+
+	if err := ctl.br.CheckPassword(&loginInfoInput); err != nil {
+		HTTPRes(c, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+
+	signedToken, err := userdefinition.AppJwtWrapper.GenerateToken(loginInfoInput.Email)
+	if err != nil {
+		log.Println(err)
+		HTTPRes(c, http.StatusInternalServerError, "error signing token", nil)
+		return
+	}
+	tokenResponse := userdefinition.LoginInfoOutput{
+		Token: signedToken,
+	}
+
+	HTTPRes(c, http.StatusBadRequest, "User Authorized", tokenResponse)
+	return
 }

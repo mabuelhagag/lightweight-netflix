@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"go-app/configs"
+	"go-app/middlewares"
 	"go-app/repositories/userrepo"
 	"log"
 	"net/http"
@@ -64,7 +65,13 @@ func Run() {
 		===== User Routes =====
 	*/
 	r.POST("/users/register/", userCtl.RegisterUser)
-
+	r.POST("/users/login/", userCtl.LoginUser)
+	movies := r.Group("/movies/").Use(middlewares.Authorize())
+	{
+		movies.GET("", func(c *gin.Context) {
+			controllers.HTTPRes(c, http.StatusOK, "Authorized", nil)
+		})
+	}
 	err = r.Run()
 	if err != nil {
 		panic(err)
