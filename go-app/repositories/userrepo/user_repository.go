@@ -51,7 +51,12 @@ func (b *userRepo) CreateUser(user *user.User) (*user.User, error) {
 	collection := b.db.Database("lw-netflix").Collection("users")
 	var result bson.M
 	if err := collection.FindOne(ctx, bson.D{{"email", user.Email}}).Decode(&result); err != nil {
-		return nil, errors.New("Unable to get user")
+		if err != nil {
+			if err != mongo.ErrNoDocuments {
+				return nil, errors.New("Unable to check for user existance")
+			}
+		}
+
 	}
 	if result != nil {
 		return nil, errors.New("User already exists")
@@ -75,6 +80,12 @@ func (b *userRepo) CheckPassword(input *user.LoginInfoInput) (err error) {
 
 	var result user.User
 	err = collection.FindOne(ctx, bson.D{{"email", input.Email}}).Decode(&result)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return errors.New("User not found")
+		}
+		return err
+	}
 	err = bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(input.Password))
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
