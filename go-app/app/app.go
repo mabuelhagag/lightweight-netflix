@@ -4,6 +4,7 @@ import (
 	"context"
 	"go-app/configs"
 	"go-app/middlewares"
+	"go-app/repositories/moviesrepo"
 	"go-app/repositories/userrepo"
 	"log"
 	"net/http"
@@ -44,11 +45,13 @@ func Run() {
 		====== Setup repositories =======
 	*/
 	userRepo := userrepo.NewUserRepo(mongoDB)
+	moviesRepo := moviesrepo.NewMoviesRepo(mongoDB)
 
 	/*
 		====== Setup controllers ========
 	*/
 	userCtl := controllers.NewUserController(userRepo)
+	moviesCtl := controllers.NewMoviesController(moviesRepo, userRepo)
 
 	/*
 		======== Routes ============
@@ -76,10 +79,10 @@ func Run() {
 		movies.GET("", authorized)
 		movies.GET("sort/:by/:direction/", authorized)
 		movies.GET("watched/", authorized)
-		movies.POST("add/", authorized)
 	}
 	movie := r.Group("/movie/").Use(middlewares.Authorize())
 	{
+		movies.POST("add/", moviesCtl.AddMovie)
 		movie.GET("info/:id/", authorized)
 		movie.DELETE("info/:id/", authorized)
 		movie.GET("watch/:id/", authorized)
