@@ -3,15 +3,24 @@ package user
 import (
 	"errors"
 	"github.com/dgrijalva/jwt-go"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
 )
 
 // User struct
 type User struct {
-	FullName string `bson:"name"`
-	Age      uint8  `bson:"page_count"`
-	Email    string `bson:"email"`
-	Password string `bson:"password"`
+	ID       primitive.ObjectID `bson:"_id,omitempty"`
+	FullName string             `bson:"name"`
+	Age      uint8              `bson:"age"`
+	Email    string             `bson:"email"`
+	Password string             `bson:"password"`
+}
+
+type ProfileOutput struct {
+	ID       string `json:"id"`
+	FullName string `json:"full_name"`
+	Age      uint8  `json:"age"`
+	Email    string `json:"email"`
 }
 
 // UserInput represents createUser body format

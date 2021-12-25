@@ -14,6 +14,7 @@ import (
 type Repo interface {
 	CreateUser(user *user.User) (*user.User, error)
 	CheckPassword(user *user.LoginInfoInput) error
+	GetUser(email string) (*user.User, error)
 }
 
 type userRepo struct {
@@ -25,6 +26,23 @@ func NewUserRepo(db *mongo.Client) Repo {
 	return &userRepo{
 		db: db,
 	}
+}
+
+func (b *userRepo) GetUser(email string) (*user.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel() // releases resources if CreateUser completes before timeout elapses
+	collection := b.db.Database("lw-netflix").Collection("users")
+	var result *user.User
+	if err := collection.FindOne(ctx, bson.D{{"email", email}}).Decode(&result); err != nil {
+		return nil, errors.New("Unable to get user")
+	}
+	userInstance := user.User{
+		ID:       result.ID,
+		FullName: result.FullName,
+		Age:      result.Age,
+		Email:    result.Email,
+	}
+	return &userInstance, nil
 }
 
 func (b *userRepo) CreateUser(user *user.User) (*user.User, error) {
