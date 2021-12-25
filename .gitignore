@@ -1,3 +1,6 @@
 .idea
 .vscode/settings.json
 /go-app/tmp/
+
+# Movies covers
+./covers/
