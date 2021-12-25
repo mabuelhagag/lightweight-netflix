@@ -82,7 +82,7 @@ func Run() {
 	}
 	movie := r.Group("/movie/").Use(middlewares.Authorize())
 	{
-		movies.POST("add/", moviesCtl.AddMovie)
+		movie.POST("add/", moviesCtl.AddMovie)
 		movie.GET("info/:id/", authorized)
 		movie.DELETE("info/:id/", authorized)
 		movie.GET("watch/:id/", authorized)
