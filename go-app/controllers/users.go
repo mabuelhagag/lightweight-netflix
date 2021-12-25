@@ -3,14 +3,11 @@ package controllers
 import (
 	"context"
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/mold/v4/modifiers"
 	userdefinition "go-app/definitions/user"
 	"go-app/repositories/userrepo"
 	"log"
 	"net/http"
 )
-
-var conform = modifiers.New()
 
 // UserController interface
 type UserController interface {

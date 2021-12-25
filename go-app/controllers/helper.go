@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/mold/v4/modifiers"
 )
 
 // Response object as HTTP response
@@ -20,3 +21,5 @@ func HTTPRes(c *gin.Context, httpCode int, msg string, data interface{}) {
 	})
 	return
 }
+
+var conform = modifiers.New()
