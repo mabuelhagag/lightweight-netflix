@@ -12,6 +12,7 @@ import (
 // MoviesController interface
 type MoviesController interface {
 	AddMovie(*gin.Context)
+	UploadCover(*gin.Context)
 }
 
 type moviesController struct {
@@ -58,4 +59,28 @@ func (ctl *moviesController) inputToMovie(input moviesdefinition.AddMovieInput, 
 		Date:        input.Date,
 		AddedBy:     user.ID,
 	}, nil
+}
+
+func (ctl *moviesController) UploadCover(c *gin.Context) {
+	var uploadCoverInput moviesdefinition.UploadCoverInput
+	if err := c.ShouldBind(&uploadCoverInput); err != nil {
+		HTTPRes(c, http.StatusBadRequest, "Error Validation", err.Error())
+		return
+	}
+	movieId := c.Param("id")
+	if movieId == "" {
+		HTTPRes(c, http.StatusBadRequest, "Error Validation", "Movie ID not provided")
+		return
+	}
+	_, err := ctl.mr.GetMovieById(movieId)
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, "Error getting movie info", err.Error())
+		return
+	}
+	err = c.SaveUploadedFile(uploadCoverInput.Cover, "/opt/go-app/covers/"+movieId+".jpg")
+	if err != nil {
+		HTTPRes(c, http.StatusBadRequest, "File upload error", err.Error())
+		return
+	}
+	HTTPRes(c, http.StatusOK, "Cover uploaded", nil)
 }

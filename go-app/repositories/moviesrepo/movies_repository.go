@@ -5,6 +5,7 @@ import (
 	"errors"
 	"go-app/definitions/movies"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"time"
 )
@@ -12,6 +13,7 @@ import (
 // Repo Interface
 type Repo interface {
 	AddMovie(movie *movies.Movie) (*movies.Movie, error)
+	GetMovieById(id string) (*movies.Movie, error)
 }
 
 type moviesRepo struct {
@@ -33,6 +35,21 @@ func (b *moviesRepo) AddMovie(movie *movies.Movie) (*movies.Movie, error) {
 	result, err := collection.InsertOne(ctx, *movie)
 
 	if err := collection.FindOne(ctx, bson.D{{"_id", result.InsertedID}}).Decode(&movie); err != nil {
+		return nil, errors.New("Unable to get movie")
+	}
+	return movie, err
+}
+
+func (b *moviesRepo) GetMovieById(id string) (*movies.Movie, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel() // releases resources if CreateUser completes before timeout elapses
+	collection := b.db.Database("lw-netflix").Collection("movies")
+
+	var movie *movies.Movie
+	movieID, err := primitive.ObjectIDFromHex(id)
+	filter := bson.M{"_id": bson.M{"$eq": movieID}}
+	err = collection.FindOne(ctx, filter).Decode(&movie)
+	if err != nil {
 		return nil, errors.New("Unable to get movie")
 	}
 	return movie, err

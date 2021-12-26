@@ -3,4 +3,4 @@
 /go-app/tmp/
 
 # Movies covers
-./covers/
+go-app/covers/

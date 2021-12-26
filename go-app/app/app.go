@@ -56,7 +56,7 @@ func Run() {
 	/*
 		======== Routes ============
 	*/
-
+	r.MaxMultipartMemory = 8 << 20 // 8 MiB
 	// API Home
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
@@ -84,6 +84,7 @@ func Run() {
 	{
 		movie.POST("add/", moviesCtl.AddMovie)
 		movie.GET("info/:id/", authorized)
+		movie.PUT("info/:id/cover/", moviesCtl.UploadCover)
 		movie.DELETE("info/:id/", authorized)
 		movie.GET("watch/:id/", authorized)
 		movie.POST("review/:id/", authorized)

@@ -2,6 +2,7 @@ package movies
 
 import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"mime/multipart"
 	"time"
 )
 
@@ -26,4 +27,7 @@ type AddMovieOutput struct {
 	Date        time.Time          `bson:"date"`
 	Cover       string             `bson:"cover"`
 	AddedBy     primitive.ObjectID `bson:"added_by"`
+}
+type UploadCoverInput struct {
+	Cover *multipart.FileHeader `form:"cover" binding:"required"`
 }
