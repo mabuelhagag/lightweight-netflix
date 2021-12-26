@@ -51,7 +51,7 @@ func (ctl *moviesController) inputToMovie(input movies.AddMovieInput, email stri
 		return nil, err
 	}
 
-	user, err := ctl.ur.GetUser(email)
+	currentUser, err := ctl.ur.GetUser(email)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func (ctl *moviesController) inputToMovie(input movies.AddMovieInput, email stri
 		Name:        input.Name,
 		Description: input.Description,
 		Date:        input.Date,
-		AddedBy:     user.ID,
+		AddedBy:     currentUser.ID,
 	}, nil
 }
 
@@ -102,13 +102,13 @@ func (ctl *moviesController) UpdateMovie(c *gin.Context) {
 	}
 
 	email := c.MustGet("email").(string)
-	user, err := ctl.ur.GetUser(email)
+	currentUser, err := ctl.ur.GetUser(email)
 	movie, err := ctl.mr.GetMovieById(movieId)
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, "Error getting movie info", err.Error())
 		return
 	}
-	if movie.AddedBy != user.ID {
+	if movie.AddedBy != currentUser.ID {
 		HTTPRes(c, http.StatusForbidden, "Error updating movie info", "Movie is not owned by current user")
 		return
 	}
@@ -146,13 +146,13 @@ func (ctl *moviesController) DeleteMovie(c *gin.Context) {
 	}
 
 	email := c.MustGet("email").(string)
-	user, err := ctl.ur.GetUser(email)
+	currentUser, err := ctl.ur.GetUser(email)
 	movie, err := ctl.mr.GetMovieById(movieId)
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, "Error getting movie info", err.Error())
 		return
 	}
-	if movie.AddedBy != user.ID {
+	if movie.AddedBy != currentUser.ID {
 		HTTPRes(c, http.StatusForbidden, "Error updating movie info", "Movie is not owned by current user")
 		return
 	}
@@ -171,13 +171,13 @@ func (ctl *moviesController) WatchMovie(c *gin.Context) {
 	}
 
 	email := c.MustGet("email").(string)
-	user, err := ctl.ur.GetUser(email)
+	currentUser, err := ctl.ur.GetUser(email)
 	movie, err := ctl.mr.GetMovieById(movieId)
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, "Error getting movie info", err.Error())
 		return
 	}
-	watchedEntry := movies.WatchedMovieEntry{MovieID: movie.ID, UserId: user.ID}
+	watchedEntry := movies.WatchedMovieEntry{MovieID: movie.ID, UserId: currentUser.ID}
 	if err = ctl.mr.AddToWatchedList(&watchedEntry); err != nil {
 		HTTPRes(c, http.StatusInternalServerError, "Error adding movie to watch list", err.Error())
 		return
