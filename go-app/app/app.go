@@ -85,6 +85,7 @@ func Run() {
 		movie.POST("add/", moviesCtl.AddMovie)
 		movie.GET("info/:id/", authorized)
 		movie.PUT("info/:id/", moviesCtl.UploadCover)
+		movie.POST("info/:id/", moviesCtl.UpdateMovie)
 		movie.DELETE("info/:id/", authorized)
 		movie.GET("watch/:id/", authorized)
 		movie.POST("review/:id/", authorized)

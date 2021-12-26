@@ -9,9 +9,9 @@ import (
 // Movie struct
 type Movie struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty"`
-	Name        string             `bson:"name"`
-	Description string             `bson:"description"`
-	Date        time.Time          `bson:"date"`
+	Name        string             `bson:"name,omitempty"`
+	Description string             `bson:"description,omitempty"`
+	Date        time.Time          `bson:"date,omitempty"`
 	Cover       string             `bson:"cover,omitempty"`
 	AddedBy     primitive.ObjectID `bson:"added_by,omitempty"`
 }
@@ -30,4 +30,10 @@ type AddMovieOutput struct {
 }
 type UploadCoverInput struct {
 	Cover *multipart.FileHeader `form:"cover" binding:"required"`
+}
+
+type UpdateMovieInput struct {
+	Name        string    `json:"name" mod:"trim,title"`
+	Description string    `json:"description" mod:"trim"`
+	Date        time.Time `json:"date"`
 }

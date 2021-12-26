@@ -7,6 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
 )
 
@@ -14,6 +15,7 @@ import (
 type Repo interface {
 	AddMovie(movie *movies.Movie) (*movies.Movie, error)
 	GetMovieById(id string) (*movies.Movie, error)
+	UpdateMovie(movie *movies.Movie, id string) (*movies.Movie, error)
 }
 
 type moviesRepo struct {
@@ -53,4 +55,23 @@ func (b *moviesRepo) GetMovieById(id string) (*movies.Movie, error) {
 		return nil, errors.New("Unable to get movie")
 	}
 	return movie, err
+}
+
+func (b *moviesRepo) UpdateMovie(movie *movies.Movie, id string) (*movies.Movie, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel() // releases resources if CreateUser completes before timeout elapses
+	collection := b.db.Database("lw-netflix").Collection("movies")
+
+	objectId, err := primitive.ObjectIDFromHex(id)
+	filter := bson.M{"_id": bson.M{"$eq": objectId}}
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+	update := bson.D{{"$set", movie}}
+	err = collection.FindOneAndUpdate(ctx, filter, update, opts).Decode(&movie)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, errors.New("Unable to get movie")
+		}
+		return nil, err
+	}
+	return movie, nil
 }

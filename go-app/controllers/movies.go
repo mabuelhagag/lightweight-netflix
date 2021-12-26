@@ -3,7 +3,7 @@ package controllers
 import (
 	"context"
 	"github.com/gin-gonic/gin"
-	moviesdefinition "go-app/definitions/movies"
+	"go-app/definitions/movies"
 	"go-app/repositories/moviesrepo"
 	"go-app/repositories/userrepo"
 	"net/http"
@@ -13,6 +13,7 @@ import (
 type MoviesController interface {
 	AddMovie(*gin.Context)
 	UploadCover(*gin.Context)
+	UpdateMovie(*gin.Context)
 }
 
 type moviesController struct {
@@ -26,7 +27,7 @@ func NewMoviesController(br moviesrepo.Repo, us userrepo.Repo) MoviesController 
 }
 
 func (ctl *moviesController) AddMovie(c *gin.Context) {
-	var movieInput moviesdefinition.AddMovieInput
+	var movieInput movies.AddMovieInput
 	if err := c.ShouldBindJSON(&movieInput); err != nil {
 		HTTPRes(c, http.StatusBadRequest, "Error Validation", err.Error())
 		return
@@ -43,7 +44,7 @@ func (ctl *moviesController) AddMovie(c *gin.Context) {
 	HTTPRes(c, http.StatusOK, "Movie added", movie)
 }
 
-func (ctl *moviesController) inputToMovie(input moviesdefinition.AddMovieInput, email string) (*moviesdefinition.Movie, error) {
+func (ctl *moviesController) inputToMovie(input movies.AddMovieInput, email string) (*movies.Movie, error) {
 	if err := conform.Struct(context.Background(), &input); err != nil {
 		return nil, err
 	}
@@ -53,7 +54,7 @@ func (ctl *moviesController) inputToMovie(input moviesdefinition.AddMovieInput, 
 		return nil, err
 	}
 
-	return &moviesdefinition.Movie{
+	return &movies.Movie{
 		Name:        input.Name,
 		Description: input.Description,
 		Date:        input.Date,
@@ -62,7 +63,7 @@ func (ctl *moviesController) inputToMovie(input moviesdefinition.AddMovieInput, 
 }
 
 func (ctl *moviesController) UploadCover(c *gin.Context) {
-	var uploadCoverInput moviesdefinition.UploadCoverInput
+	var uploadCoverInput movies.UploadCoverInput
 	if err := c.ShouldBind(&uploadCoverInput); err != nil {
 		HTTPRes(c, http.StatusBadRequest, "Error Validation", err.Error())
 		return
@@ -83,4 +84,54 @@ func (ctl *moviesController) UploadCover(c *gin.Context) {
 		return
 	}
 	HTTPRes(c, http.StatusOK, "Cover uploaded", nil)
+}
+
+func (ctl *moviesController) UpdateMovie(c *gin.Context) {
+	var movieInput movies.UpdateMovieInput
+	if err := c.ShouldBindJSON(&movieInput); err != nil {
+		HTTPRes(c, http.StatusBadRequest, "Error Validation", err.Error())
+		return
+	}
+
+	movieId := c.Param("id")
+	if movieId == "" {
+		HTTPRes(c, http.StatusBadRequest, "Error Validation", "Movie ID not provided")
+		return
+	}
+
+	email := c.MustGet("email").(string)
+	user, err := ctl.ur.GetUser(email)
+	movie, err := ctl.mr.GetMovieById(movieId)
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, "Error getting movie info", err.Error())
+		return
+	}
+	if movie.AddedBy != user.ID {
+		HTTPRes(c, http.StatusForbidden, "Error updating movie info", "Movie is not owned by current user")
+		return
+	}
+	movieUpdate, err := ctl.updateMovieInputToMovie(movieInput)
+	if err != nil {
+		HTTPRes(c, http.StatusBadRequest, "Error Validation", err.Error())
+		return
+	}
+	movie, err = ctl.mr.UpdateMovie(movieUpdate, movieId)
+
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, "Failed while adding movie", err.Error())
+		return
+	}
+	HTTPRes(c, http.StatusOK, "Movie Updated", movie)
+}
+
+func (ctl *moviesController) updateMovieInputToMovie(input movies.UpdateMovieInput) (*movies.Movie, error) {
+	if err := conform.Struct(context.Background(), &input); err != nil {
+		return nil, err
+	}
+
+	return &movies.Movie{
+		Name:        input.Name,
+		Description: input.Description,
+		Date:        input.Date,
+	}, nil
 }
