@@ -17,8 +17,8 @@ type Repo interface {
 	GetMovieById(id string) (*movies.Movie, error)
 	UpdateMovie(movie *movies.Movie, id string) (*movies.Movie, error)
 	DeleteMovie(id string) error
+	AddToWatchedList(watchEntry *movies.WatchedMovieEntry) error
 }
-
 type moviesRepo struct {
 	db *mongo.Client
 }
@@ -93,4 +93,24 @@ func (b *moviesRepo) DeleteMovie(id string) error {
 		return err
 	}
 	return nil
+}
+
+func (b *moviesRepo) AddToWatchedList(watchEntry *movies.WatchedMovieEntry) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel() // releases resources if CreateUser completes before timeout elapses
+	collection := b.db.Database("lw-netflix").Collection("watched")
+
+	filter := bson.D{
+		{"$and",
+			bson.A{
+				bson.D{{"user_id", bson.D{{"$eq", watchEntry.UserId}}}},
+				bson.D{{"movie_id", bson.D{{"$eq", watchEntry.MovieID}}}},
+			}},
+	}
+	opts := options.Update().SetUpsert(true)
+	watchEntry.Time = time.Now()
+	update := bson.D{{"$set", watchEntry}}
+	_, err := collection.UpdateOne(ctx, filter, update, opts)
+	return err
+
 }

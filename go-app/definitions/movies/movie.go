@@ -37,3 +37,10 @@ type UpdateMovieInput struct {
 	Description string    `json:"description" mod:"trim"`
 	Date        time.Time `json:"date"`
 }
+
+type WatchedMovieEntry struct {
+	ID      primitive.ObjectID `bson:"_id,omitempty"`
+	MovieID primitive.ObjectID `bson:"movie_id"`
+	UserId  primitive.ObjectID `bson:"user_id"`
+	Time    time.Time          `bson:"time"`
+}

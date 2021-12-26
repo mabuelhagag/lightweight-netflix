@@ -15,6 +15,7 @@ type MoviesController interface {
 	UploadCover(*gin.Context)
 	UpdateMovie(*gin.Context)
 	DeleteMovie(c *gin.Context)
+	WatchMovie(c *gin.Context)
 }
 
 type moviesController struct {
@@ -161,4 +162,25 @@ func (ctl *moviesController) DeleteMovie(c *gin.Context) {
 		return
 	}
 	HTTPRes(c, http.StatusOK, "Movie Deleted", nil)
+}
+func (ctl *moviesController) WatchMovie(c *gin.Context) {
+	movieId := c.Param("id")
+	if movieId == "" {
+		HTTPRes(c, http.StatusBadRequest, "Error Validation", "Movie ID not provided")
+		return
+	}
+
+	email := c.MustGet("email").(string)
+	user, err := ctl.ur.GetUser(email)
+	movie, err := ctl.mr.GetMovieById(movieId)
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, "Error getting movie info", err.Error())
+		return
+	}
+	watchedEntry := movies.WatchedMovieEntry{MovieID: movie.ID, UserId: user.ID}
+	if err = ctl.mr.AddToWatchedList(&watchedEntry); err != nil {
+		HTTPRes(c, http.StatusInternalServerError, "Error adding movie to watch list", err.Error())
+		return
+	}
+	HTTPRes(c, http.StatusOK, "Movie added to watch list", nil)
 }
