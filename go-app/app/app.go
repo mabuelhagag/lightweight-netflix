@@ -88,7 +88,7 @@ func Run() {
 		movie.POST("info/:id/", moviesCtl.UpdateMovie)
 		movie.DELETE("info/:id/", moviesCtl.DeleteMovie)
 		movie.GET("watch/:id/", moviesCtl.WatchMovie)
-		movie.POST("review/:id/", authorized)
+		movie.POST("review/:id/", moviesCtl.ReviewMovie)
 	}
 	err = r.Run()
 	if err != nil {

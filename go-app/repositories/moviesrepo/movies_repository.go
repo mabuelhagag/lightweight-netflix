@@ -18,6 +18,8 @@ type Repo interface {
 	UpdateMovie(movie *movies.Movie, id string) (*movies.Movie, error)
 	DeleteMovie(id string) error
 	AddToWatchedList(watchEntry *movies.WatchedMovieEntry) error
+	DidWatchMovie(movieId string, userID string) (bool, error)
+	ReviewMovie(reviewEntry *movies.ReviewMovieEntry) error
 }
 type moviesRepo struct {
 	db *mongo.Client
@@ -110,6 +112,51 @@ func (b *moviesRepo) AddToWatchedList(watchEntry *movies.WatchedMovieEntry) erro
 	opts := options.Update().SetUpsert(true)
 	watchEntry.Time = time.Now()
 	update := bson.D{{"$set", watchEntry}}
+	_, err := collection.UpdateOne(ctx, filter, update, opts)
+	return err
+
+}
+
+func (b *moviesRepo) DidWatchMovie(movieId string, userID string) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel() // releases resources if CreateUser completes before timeout elapses
+	collection := b.db.Database("lw-netflix").Collection("watched")
+
+	userObjectID, _ := primitive.ObjectIDFromHex(userID)
+	movieObjectID, _ := primitive.ObjectIDFromHex(movieId)
+	filter := bson.D{
+		{"$and",
+			bson.A{
+				bson.D{{"user_id", bson.D{{"$eq", userObjectID}}}},
+				bson.D{{"movie_id", bson.D{{"$eq", movieObjectID}}}},
+			}},
+	}
+	var watchedEntry movies.WatchedMovieEntry
+	err := collection.FindOne(ctx, filter).Decode(&watchedEntry)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return false, errors.New("User hasn't watched the movie yet")
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+func (b *moviesRepo) ReviewMovie(reviewEntry *movies.ReviewMovieEntry) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel() // releases resources if CreateUser completes before timeout elapses
+	collection := b.db.Database("lw-netflix").Collection("reviews")
+
+	filter := bson.D{
+		{"$and",
+			bson.A{
+				bson.D{{"user_id", bson.D{{"$eq", reviewEntry.UserId}}}},
+				bson.D{{"movie_id", bson.D{{"$eq", reviewEntry.MovieID}}}},
+			}},
+	}
+	opts := options.Update().SetUpsert(true)
+	reviewEntry.Time = time.Now()
+	update := bson.D{{"$set", reviewEntry}}
 	_, err := collection.UpdateOne(ctx, filter, update, opts)
 	return err
 

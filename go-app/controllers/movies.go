@@ -4,9 +4,11 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"go-app/definitions/movies"
+	"go-app/definitions/user"
 	"go-app/repositories/moviesrepo"
 	"go-app/repositories/userrepo"
 	"net/http"
+	"time"
 )
 
 // MoviesController interface
@@ -16,6 +18,7 @@ type MoviesController interface {
 	UpdateMovie(*gin.Context)
 	DeleteMovie(c *gin.Context)
 	WatchMovie(c *gin.Context)
+	ReviewMovie(c *gin.Context)
 }
 
 type moviesController struct {
@@ -183,4 +186,70 @@ func (ctl *moviesController) WatchMovie(c *gin.Context) {
 		return
 	}
 	HTTPRes(c, http.StatusOK, "Movie added to watch list", nil)
+}
+
+func (ctl *moviesController) ReviewMovie(c *gin.Context) {
+	var reviewInput movies.ReviewMovieInput
+	if err := c.ShouldBindJSON(&reviewInput); err != nil {
+		HTTPRes(c, http.StatusBadRequest, "Error Validation", err.Error())
+		return
+	}
+
+	movieId := c.Param("id")
+	if movieId == "" {
+		HTTPRes(c, http.StatusBadRequest, "Error Validation", "Movie ID not provided")
+		return
+	}
+
+	email := c.MustGet("email").(string)
+	currentUser, err := ctl.ur.GetUser(email)
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, "Error getting user", err.Error())
+		return
+	}
+
+	movie, err := ctl.mr.GetMovieById(movieId)
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, "Error getting movie info", err.Error())
+		return
+	}
+
+	watchedMovie, err := ctl.mr.DidWatchMovie(movieId, currentUser.ID.Hex())
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, "Error while checking watched movie", err.Error())
+		return
+	}
+	if watchedMovie != true {
+		HTTPRes(c, http.StatusForbidden, "Error reviewing movie", "User hasn't watched the movie yet")
+		return
+	}
+
+	reviewEntry, err := ctl.reviewMovieInputToReviewMovieEntry(reviewInput, currentUser, movie)
+	if err != nil {
+		HTTPRes(c, http.StatusBadRequest, "Error Validation", err.Error())
+		return
+	}
+
+	err = ctl.mr.ReviewMovie(reviewEntry)
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, "Error while reviewing movie", err.Error())
+		return
+	}
+
+	HTTPRes(c, http.StatusOK, "Movie reviewed", nil)
+
+}
+
+func (ctl *moviesController) reviewMovieInputToReviewMovieEntry(input movies.ReviewMovieInput, user *user.User, movie *movies.Movie) (*movies.ReviewMovieEntry, error) {
+	if err := conform.Struct(context.Background(), &input); err != nil {
+		return nil, err
+	}
+
+	return &movies.ReviewMovieEntry{
+		MovieID: movie.ID,
+		UserId:  user.ID,
+		Rate:    input.Rate,
+		Review:  input.Review,
+		Time:    time.Now(),
+	}, nil
 }
