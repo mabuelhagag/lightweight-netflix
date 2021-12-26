@@ -14,6 +14,7 @@ type MoviesController interface {
 	AddMovie(*gin.Context)
 	UploadCover(*gin.Context)
 	UpdateMovie(*gin.Context)
+	DeleteMovie(c *gin.Context)
 }
 
 type moviesController struct {
@@ -134,4 +135,30 @@ func (ctl *moviesController) updateMovieInputToMovie(input movies.UpdateMovieInp
 		Description: input.Description,
 		Date:        input.Date,
 	}, nil
+}
+
+func (ctl *moviesController) DeleteMovie(c *gin.Context) {
+	movieId := c.Param("id")
+	if movieId == "" {
+		HTTPRes(c, http.StatusBadRequest, "Error Validation", "Movie ID not provided")
+		return
+	}
+
+	email := c.MustGet("email").(string)
+	user, err := ctl.ur.GetUser(email)
+	movie, err := ctl.mr.GetMovieById(movieId)
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, "Error getting movie info", err.Error())
+		return
+	}
+	if movie.AddedBy != user.ID {
+		HTTPRes(c, http.StatusForbidden, "Error updating movie info", "Movie is not owned by current user")
+		return
+	}
+	err = ctl.mr.DeleteMovie(movieId)
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, "Error deleting movie", err.Error())
+		return
+	}
+	HTTPRes(c, http.StatusOK, "Movie Deleted", nil)
 }

@@ -16,6 +16,7 @@ type Repo interface {
 	AddMovie(movie *movies.Movie) (*movies.Movie, error)
 	GetMovieById(id string) (*movies.Movie, error)
 	UpdateMovie(movie *movies.Movie, id string) (*movies.Movie, error)
+	DeleteMovie(id string) error
 }
 
 type moviesRepo struct {
@@ -74,4 +75,22 @@ func (b *moviesRepo) UpdateMovie(movie *movies.Movie, id string) (*movies.Movie,
 		return nil, err
 	}
 	return movie, nil
+}
+
+func (b *moviesRepo) DeleteMovie(id string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel() // releases resources if CreateUser completes before timeout elapses
+	collection := b.db.Database("lw-netflix").Collection("movies")
+
+	objectId, err := primitive.ObjectIDFromHex(id)
+	filter := bson.M{"_id": bson.M{"$eq": objectId}}
+	var movie *movies.Movie
+	err = collection.FindOneAndDelete(ctx, filter).Decode(&movie)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return errors.New("Unable to get movie")
+		}
+		return err
+	}
+	return nil
 }
