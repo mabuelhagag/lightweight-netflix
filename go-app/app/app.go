@@ -69,10 +69,6 @@ func Run() {
 		===== User Routes =====
 	*/
 
-	authorized := func(c *gin.Context) {
-		controllers.HTTPRes(c, http.StatusOK, "Authorized", nil)
-	}
-
 	r.POST("/users/register/", userCtl.RegisterUser)
 	r.POST("/users/login/", userCtl.LoginUser)
 	movies := r.Group("/movies/")
@@ -87,7 +83,7 @@ func Run() {
 	movie := r.Group("/movie/").Use(middlewares.Authorize())
 	{
 		movie.POST("add/", moviesCtl.AddMovie)
-		movie.GET("info/:id/", authorized)
+		movie.GET("info/:id/", moviesCtl.GetMovieInfo)
 		movie.PUT("info/:id/", moviesCtl.UploadCover)
 		movie.POST("info/:id/", moviesCtl.UpdateMovie)
 		movie.DELETE("info/:id/", moviesCtl.DeleteMovie)

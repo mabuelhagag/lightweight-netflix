@@ -4,13 +4,15 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/kamva/mgm/v3"
+	"github.com/kamva/mgm/v3/builder"
+	"github.com/kamva/mgm/v3/operator"
 	"go-app/definitions/movies"
 	"go-app/definitions/users"
 	"go-app/repositories/moviesrepo"
 	"go-app/repositories/usersrepo"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
 	"strings"
 )
@@ -25,6 +27,7 @@ type MoviesController interface {
 	ReviewMovie(c *gin.Context)
 	ListWatchedMovies(c *gin.Context)
 	ListMovies(c *gin.Context)
+	GetMovieInfo(c *gin.Context)
 }
 
 type moviesController struct {
@@ -311,10 +314,99 @@ func (ctl *moviesController) ListMovies(c *gin.Context) {
 		sortByOption = -1
 	}
 
-	results := []movies.Movie{}
-	opts := options.Find().SetSort(bson.D{{sortBy, sortByOption}})
-	_ = mgm.Coll(&movies.Movie{}).SimpleFind(&results, bson.D{}, opts)
+	results := []movies.MovieInfo{}
+	err := mgm.Coll(&movies.Movie{}).SimpleAggregate(
+		&results,
+		ctl.getAggregationStages("", sortBy, sortByOption)...,
+	)
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, "Error getting movie info", err.Error())
+		return
+	}
 
 	HTTPRes(c, http.StatusOK, "List of movies", results)
 
+}
+
+func (ctl *moviesController) GetMovieInfo(c *gin.Context) {
+	movieId := c.Param("id")
+	if movieId == "" {
+		HTTPRes(c, http.StatusBadRequest, "Error Validation", "Movie ID not provided")
+		return
+	}
+
+	results := []movies.MovieInfo{}
+	err := mgm.Coll(&movies.Movie{}).SimpleAggregate(
+		&results,
+		ctl.getAggregationStages(movieId, "", 0)...,
+	)
+	if err != nil {
+		HTTPRes(c, http.StatusInternalServerError, "Error getting movie info", err.Error())
+		return
+	}
+	HTTPRes(c, http.StatusOK, "List of movies", results[0])
+}
+
+func (ctl *moviesController) getAggregationStages(movieId string, sortBy string, direction int8) []interface{} {
+	reviewsCollName := mgm.Coll(&movies.ReviewMovieEntry{}).Name()
+
+	lookupStage := builder.Lookup(reviewsCollName, "_id", "movie_id", "reviews")
+
+	countRatingsStage :=
+		bson.M{operator.Set: bson.M{
+			"ratingsTotal": bson.M{
+				operator.Reduce: bson.M{
+					"input":        "$reviews",
+					"initialValue": 0,
+					"in": bson.M{
+						operator.Sum: bson.A{"$$value", "$$this.rating"},
+					},
+				},
+			},
+			"ratingsCount": bson.M{
+				operator.Size: "$reviews",
+			},
+		},
+		}
+
+	averageRatingsStage :=
+		bson.M{operator.Set: bson.M{
+			"rating": bson.M{
+				operator.Cond: bson.M{
+					"if": bson.M{
+						operator.Gt: bson.A{"$ratingsCount", 0},
+					},
+					"then": bson.M{
+						operator.Divide: bson.A{"$ratingsTotal", "$ratingsCount"},
+					},
+					"else": 0,
+				},
+			},
+		},
+		}
+
+	roundingStage :=
+		bson.M{operator.Set: bson.M{
+			"rating": bson.M{operator.Round: bson.A{"$rating", 1}},
+		},
+		}
+
+	unsetStage :=
+		bson.M{operator.Unset: bson.A{"ratingsCount", "ratingsTotal"}}
+
+	var stages []interface{}
+	if movieId != "" {
+		movieHex, _ := primitive.ObjectIDFromHex(movieId)
+		matchStage := bson.M{operator.Match: bson.M{"_id": movieHex}}
+		stages = append(stages, matchStage)
+	}
+
+	stages = append(stages, lookupStage, countRatingsStage, averageRatingsStage, roundingStage, unsetStage)
+
+	if sortBy != "" {
+		sortStage := bson.M{operator.Sort: bson.M{sortBy: direction}}
+		stages = append(stages, sortStage)
+	}
+
+	return stages
 }

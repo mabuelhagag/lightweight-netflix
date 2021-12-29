@@ -63,3 +63,11 @@ type ReviewMovieEntry struct {
 func (m *ReviewMovieEntry) CollectionName() string {
 	return "reviews"
 }
+
+type MovieInfo struct {
+	mgm.DefaultModel `bson:",inline"`
+	Name             string    `bson:"name,omitempty"`
+	Description      string    `bson:"description,omitempty"`
+	Date             time.Time `bson:"date,omitempty"` // TODO: use string to parse date from it
+	Rating           float32   `bson:"rating,omitempty"`
+}
