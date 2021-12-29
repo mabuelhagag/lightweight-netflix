@@ -10,7 +10,6 @@ import (
 
 // Repo Interface
 type Repo interface {
-	AddMovie(movie *movies.Movie) (*movies.Movie, error)
 	AddToWatchedList(watchEntry *movies.WatchedMovieEntry) error
 	DidWatchMovie(movie *movies.Movie, user *users.User) (bool, error)
 	ReviewMovie(reviewEntry *movies.ReviewMovieEntry) error
@@ -24,14 +23,6 @@ func NewMoviesRepo(db *mongo.Client) Repo {
 	return &moviesRepo{
 		db: db,
 	}
-}
-
-func (b *moviesRepo) AddMovie(movie *movies.Movie) (*movies.Movie, error) {
-	if err := mgm.Coll(movie).Create(movie); err != nil {
-		return nil, err
-	}
-
-	return movie, nil
 }
 
 func (b *moviesRepo) AddToWatchedList(watchEntry *movies.WatchedMovieEntry) error {

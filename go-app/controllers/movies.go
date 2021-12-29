@@ -42,9 +42,9 @@ func (ctl *moviesController) AddMovie(c *gin.Context) {
 	if err != nil {
 		HTTPRes(c, http.StatusBadRequest, "Validation Error", err.Error())
 	}
-	movie, err = ctl.mr.AddMovie(movie)
-	if err != nil {
+	if err := mgm.Coll(movie).Create(movie); err != nil {
 		HTTPRes(c, http.StatusInternalServerError, "Failed while adding movie", err.Error())
+		return
 	}
 
 	output := ctl.movieToOutput(movie)
