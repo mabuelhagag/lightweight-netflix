@@ -88,6 +88,6 @@ func (ctl *userController) LoginUser(c *gin.Context) {
 		Token: signedToken,
 	}
 
-	HTTPRes(c, http.StatusBadRequest, "User Authorized", tokenResponse)
+	HTTPRes(c, http.StatusOK, "User Authorized", tokenResponse)
 	return
 }
