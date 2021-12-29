@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"github.com/gin-gonic/gin"
+	"github.com/kamva/mgm/v3"
 	"go-app/definitions/movies"
 	"go-app/definitions/users"
 	"go-app/repositories/moviesrepo"
@@ -75,15 +76,16 @@ func (ctl *moviesController) movieToOutput(movie *movies.Movie) *movies.AddMovie
 func (ctl *moviesController) UploadCover(c *gin.Context) {
 	var uploadCoverInput movies.UploadCoverInput
 	if err := c.ShouldBind(&uploadCoverInput); err != nil {
-		HTTPRes(c, http.StatusBadRequest, "Error Validation", err.Error())
+		HTTPRes(c, http.StatusBadRequest, "Validation Error", err.Error())
 		return
 	}
 	movieId := c.Param("id")
 	if movieId == "" {
-		HTTPRes(c, http.StatusBadRequest, "Error Validation", "Movie ID not provided")
+		HTTPRes(c, http.StatusBadRequest, "Validation Error", "Movie ID not provided")
 		return
 	}
-	_, err := ctl.mr.GetMovieById(movieId)
+	movie := &movies.Movie{}
+	err := mgm.Coll(movie).FindByID(movieId, movie)
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, "Error getting movie info", err.Error())
 		return
