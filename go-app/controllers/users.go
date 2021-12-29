@@ -64,12 +64,12 @@ func (ctl *userController) inputToUser(input userdefinition.UserInput) (*userdef
 func (ctl *userController) LoginUser(c *gin.Context) {
 	var loginInfoInput userdefinition.LoginInfoInput
 	if err := c.ShouldBindJSON(&loginInfoInput); err != nil {
-		HTTPRes(c, http.StatusBadRequest, "Error Validation", err.Error())
+		HTTPRes(c, http.StatusBadRequest, "Validation error", err.Error())
 		return
 	}
 
 	if err := conform.Struct(context.Background(), &loginInfoInput); err != nil {
-		HTTPRes(c, http.StatusBadRequest, "Error Validation", err.Error())
+		HTTPRes(c, http.StatusBadRequest, "Validation error", err.Error())
 		return
 	}
 
