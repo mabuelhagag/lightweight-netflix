@@ -1,0 +1,517 @@
+{
+	"info": {
+		"_postman_id": "ff277833-90d3-4d38-8308-b7cf3cb41571",
+		"name": "Lightweight Netflix",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"full_name\": \" Example User 1 \",\n    \"age\": 30,\n    \"email\": \"{{email}}\",\n    \"password\": \"{{password}}\",\n    \"password_confirmation\": \"{{password}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/users/register/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"users",
+								"register",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"pm.collectionVariables.set(\"jwt\", jsonData.data.token);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{email}}\",\n    \"password\": \"{{password}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/users/login/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"users",
+								"login",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Movies",
+			"item": [
+				{
+					"name": "List by name [ascending]",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/movies/sort/name/asc/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"movies",
+								"sort",
+								"name",
+								"asc",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List by name [descending]",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/movies/sort/name/desc/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"movies",
+								"sort",
+								"name",
+								"desc",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List by date [ascending]",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/movies/sort/date/asc/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"movies",
+								"sort",
+								"date",
+								"asc",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List by rating [ascending]",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/movies/sort/rating/asc/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"movies",
+								"sort",
+								"rating",
+								"asc",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List by rating [descending]",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/movies/sort/rating/desc/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"movies",
+								"sort",
+								"rating",
+								"desc",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Watched list",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/movies/watched/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"movies",
+								"watched",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{jwt}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Movie",
+			"item": [
+				{
+					"name": "Add movie",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = JSON.parse(responseBody);",
+									"pm.collectionVariables.set(\"movieId\", jsonData.data.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Movie Title \",\n    \"description\": \"   Description\",\n    \"date\": \"2020-01-01T00:00:00Z\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/movie/add/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"movie",
+								"add",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload cover",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "cover",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseURL}}/movie/info/{{movieId}}/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"movie",
+								"info",
+								"{{movieId}}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update movie",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Movie Title 1\",\n    \"description\": \"   Description\",\n    \"date\": \"2020-01-01T00:00:00Z\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/movie/info/{{movieId}}/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"movie",
+								"info",
+								"{{movieId}}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/movie/info/{{movieId}}/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"movie",
+								"info",
+								"{{movieId}}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/movie/info/{{movieId}}/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"movie",
+								"info",
+								"{{movieId}}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add to watched list",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/movie/watch/{{movieId}}/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"movie",
+								"watch",
+								"{{movieId}}",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Review",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rating\": 1,\n    \"review\": \"Awesome!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/movie/review/{{movieId}}/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"movie",
+								"review",
+								"{{movieId}}",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{jwt}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseURL",
+			"value": "http://localhost:8000"
+		},
+		{
+			"key": "email",
+			"value": "user1@example.com"
+		},
+		{
+			"key": "password",
+			"value": "QwertyPass!"
+		},
+		{
+			"key": "jwt",
+			"value": null
+		},
+		{
+			"key": "movieId",
+			"value": ""
+		}
+	]
+}
