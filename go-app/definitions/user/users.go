@@ -80,6 +80,7 @@ type JwtClaim struct {
 	jwt.StandardClaims
 }
 
+// AppJwtWrapper TODO: add secret key to config
 var AppJwtWrapper = JwtWrapper{
 	SecretKey:       "verysecretkey",
 	Issuer:          "AuthService",

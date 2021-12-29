@@ -55,24 +55,20 @@ func (b *userRepo) CreateUser(user *user.User) (*user.User, error) {
 }
 
 func (b *userRepo) CheckPassword(input *user.LoginInfoInput) (err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel() // releases resources if CreateUser completes before timeout elapses
+	var userFound = &user.User{}
+	err = mgm.Coll(userFound).First(bson.M{"email": input.Email}, userFound)
 
-	collection := b.db.Database("lw-netflix").Collection("users")
-
-	var result user.User
-	err = collection.FindOne(ctx, bson.D{{"email", input.Email}}).Decode(&result)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return errors.New("User not found")
+			return errors.New("user does not exist")
 		}
 		return err
 	}
-	err = bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(input.Password))
+
+	err = bcrypt.CompareHashAndPassword([]byte(userFound.Password), []byte(input.Password))
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return errors.New("Email and password combination is incorrect")
-		}
+		return errors.New("email and password combination is incorrect")
 	}
+
 	return nil
 }
