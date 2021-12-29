@@ -37,8 +37,7 @@ func (ctl *moviesController) AddMovie(c *gin.Context) {
 		HTTPRes(c, http.StatusBadRequest, "Error Validation", err.Error())
 		return
 	}
-	email := c.MustGet("email").(string)
-	movie, err := ctl.inputToMovie(movieInput, email)
+	movie, err := ctl.inputToMovie(movieInput, c)
 	if err != nil {
 		HTTPRes(c, http.StatusBadRequest, "Error Validation", err.Error())
 	}
@@ -49,16 +48,12 @@ func (ctl *moviesController) AddMovie(c *gin.Context) {
 	HTTPRes(c, http.StatusOK, "Movie added", movie)
 }
 
-func (ctl *moviesController) inputToMovie(input movies.AddMovieInput, email string) (*movies.Movie, error) {
+func (ctl *moviesController) inputToMovie(input movies.AddMovieInput, c *gin.Context) (*movies.Movie, error) {
 	if err := conform.Struct(context.Background(), &input); err != nil {
 		return nil, err
 	}
 
-	currentUser, err := ctl.ur.GetUser(email)
-	if err != nil {
-		return nil, err
-	}
-
+	currentUser := c.MustGet("user").(user.User)
 	return &movies.Movie{
 		Name:        input.Name,
 		Description: input.Description,
@@ -104,8 +99,7 @@ func (ctl *moviesController) UpdateMovie(c *gin.Context) {
 		return
 	}
 
-	email := c.MustGet("email").(string)
-	currentUser, err := ctl.ur.GetUser(email)
+	currentUser := c.MustGet("user").(user.User)
 	movie, err := ctl.mr.GetMovieById(movieId)
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, "Error getting movie info", err.Error())
@@ -148,8 +142,7 @@ func (ctl *moviesController) DeleteMovie(c *gin.Context) {
 		return
 	}
 
-	email := c.MustGet("email").(string)
-	currentUser, err := ctl.ur.GetUser(email)
+	currentUser := c.MustGet("user").(user.User)
 	movie, err := ctl.mr.GetMovieById(movieId)
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, "Error getting movie info", err.Error())
@@ -173,8 +166,7 @@ func (ctl *moviesController) WatchMovie(c *gin.Context) {
 		return
 	}
 
-	email := c.MustGet("email").(string)
-	currentUser, err := ctl.ur.GetUser(email)
+	currentUser := c.MustGet("email").(user.User)
 	movie, err := ctl.mr.GetMovieById(movieId)
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, "Error getting movie info", err.Error())
@@ -201,12 +193,7 @@ func (ctl *moviesController) ReviewMovie(c *gin.Context) {
 		return
 	}
 
-	email := c.MustGet("email").(string)
-	currentUser, err := ctl.ur.GetUser(email)
-	if err != nil {
-		HTTPRes(c, http.StatusInternalServerError, "Error getting user", err.Error())
-		return
-	}
+	currentUser := c.MustGet("user").(user.User)
 
 	movie, err := ctl.mr.GetMovieById(movieId)
 	if err != nil {
@@ -240,7 +227,7 @@ func (ctl *moviesController) ReviewMovie(c *gin.Context) {
 
 }
 
-func (ctl *moviesController) reviewMovieInputToReviewMovieEntry(input movies.ReviewMovieInput, user *user.User, movie *movies.Movie) (*movies.ReviewMovieEntry, error) {
+func (ctl *moviesController) reviewMovieInputToReviewMovieEntry(input movies.ReviewMovieInput, user user.User, movie *movies.Movie) (*movies.ReviewMovieEntry, error) {
 	if err := conform.Struct(context.Background(), &input); err != nil {
 		return nil, err
 	}
