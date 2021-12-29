@@ -11,5 +11,5 @@ This project uses Docker so make sure to install it first.
 ```shell
 $ docker compose up
 ```
-- This will build and start the services described in [docker-compose.yml](./blob/master/docker-compose.yml)
-- Import the included [postman collection](./blob/master/lightweight-netflix.postman_collection.json)
+- This will build and start the services described in [docker-compose.yml](./docker-compose.yml)
+- Import the included [postman collection](./lightweight-netflix.postman_collection.json)
