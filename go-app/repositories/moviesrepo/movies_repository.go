@@ -1,23 +1,16 @@
 package moviesrepo
 
 import (
-	"context"
-	"errors"
 	"github.com/kamva/mgm/v3"
 	"go-app/definitions/movies"
 	"go-app/definitions/users"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"time"
 )
 
 // Repo Interface
 type Repo interface {
 	AddMovie(movie *movies.Movie) (*movies.Movie, error)
-	UpdateMovie(movie *movies.Movie, id string) (*movies.Movie, error)
-	DeleteMovie(id string) error
 	AddToWatchedList(watchEntry *movies.WatchedMovieEntry) error
 	DidWatchMovie(movie *movies.Movie, user *users.User) (bool, error)
 	ReviewMovie(reviewEntry *movies.ReviewMovieEntry) error
@@ -39,43 +32,6 @@ func (b *moviesRepo) AddMovie(movie *movies.Movie) (*movies.Movie, error) {
 	}
 
 	return movie, nil
-}
-
-func (b *moviesRepo) UpdateMovie(movie *movies.Movie, id string) (*movies.Movie, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel() // releases resources if CreateUser completes before timeout elapses
-	collection := b.db.Database("lw-netflix").Collection("movies")
-
-	objectId, err := primitive.ObjectIDFromHex(id)
-	filter := bson.M{"_id": bson.M{"$eq": objectId}}
-	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
-	update := bson.D{{"$set", movie}}
-	err = collection.FindOneAndUpdate(ctx, filter, update, opts).Decode(&movie)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, errors.New("unable to get movie")
-		}
-		return nil, err
-	}
-	return movie, nil
-}
-
-func (b *moviesRepo) DeleteMovie(id string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel() // releases resources if CreateUser completes before timeout elapses
-	collection := b.db.Database("lw-netflix").Collection("movies")
-
-	objectId, err := primitive.ObjectIDFromHex(id)
-	filter := bson.M{"_id": bson.M{"$eq": objectId}}
-	var movie *movies.Movie
-	err = collection.FindOneAndDelete(ctx, filter).Decode(&movie)
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return errors.New("unable to get movie")
-		}
-		return err
-	}
-	return nil
 }
 
 func (b *moviesRepo) AddToWatchedList(watchEntry *movies.WatchedMovieEntry) error {
