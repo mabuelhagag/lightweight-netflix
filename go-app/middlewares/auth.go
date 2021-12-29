@@ -3,9 +3,8 @@ package middlewares
 import (
 	"github.com/kamva/mgm/v3"
 	"go-app/controllers"
+	"go-app/definitions/users"
 	"go.mongodb.org/mongo-driver/bson"
-
-	"go-app/definitions/user"
 	"net/http"
 	"strings"
 
@@ -32,14 +31,14 @@ func Authorize() gin.HandlerFunc {
 			return
 		}
 
-		claims, err := user.AppJwtWrapper.ValidateToken(clientToken)
+		claims, err := users.AppJwtWrapper.ValidateToken(clientToken)
 		if err != nil {
 			controllers.HTTPRes(c, http.StatusUnauthorized, "Error while validating token", err.Error())
 			c.Abort()
 			return
 		}
 
-		currentUser := &user.User{}
+		currentUser := &users.User{}
 		err = mgm.Coll(currentUser).First(bson.M{"email": claims.Email}, currentUser)
 		if err != nil {
 			controllers.HTTPRes(c, http.StatusUnauthorized, "Error while getting user", err.Error())

@@ -1,9 +1,9 @@
-package userrepo
+package usersrepo
 
 import (
 	"errors"
 	"github.com/kamva/mgm/v3"
-	"go-app/definitions/user"
+	"go-app/definitions/users"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
@@ -11,22 +11,22 @@ import (
 
 // Repo Interface
 type Repo interface {
-	CreateUser(user *user.User) (*user.User, error)
-	CheckPassword(user *user.LoginInfoInput) error
+	CreateUser(user *users.User) (*users.User, error)
+	CheckPassword(user *users.LoginInfoInput) error
 }
 
-type userRepo struct {
+type usersRepo struct {
 	db *mongo.Client
 }
 
-// NewUserRepo will instantiate User Repository
-func NewUserRepo(db *mongo.Client) Repo {
-	return &userRepo{
+// NewUsersRepo will instantiate User Repository
+func NewUsersRepo(db *mongo.Client) Repo {
+	return &usersRepo{
 		db: db,
 	}
 }
 
-func (b *userRepo) CreateUser(user *user.User) (*user.User, error) {
+func (b *usersRepo) CreateUser(user *users.User) (*users.User, error) {
 	err := mgm.Coll(user).Create(user)
 	if err != nil {
 		return nil, err
@@ -34,8 +34,8 @@ func (b *userRepo) CreateUser(user *user.User) (*user.User, error) {
 	return user, nil
 }
 
-func (b *userRepo) CheckPassword(input *user.LoginInfoInput) (err error) {
-	var userFound = &user.User{}
+func (b *usersRepo) CheckPassword(input *users.LoginInfoInput) (err error) {
+	var userFound = &users.User{}
 	err = mgm.Coll(userFound).First(bson.M{"email": input.Email}, userFound)
 
 	if err != nil {

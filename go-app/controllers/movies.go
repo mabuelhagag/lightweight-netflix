@@ -4,9 +4,9 @@ import (
 	"context"
 	"github.com/gin-gonic/gin"
 	"go-app/definitions/movies"
-	"go-app/definitions/user"
+	"go-app/definitions/users"
 	"go-app/repositories/moviesrepo"
-	"go-app/repositories/userrepo"
+	"go-app/repositories/usersrepo"
 	"net/http"
 	"time"
 )
@@ -23,11 +23,11 @@ type MoviesController interface {
 
 type moviesController struct {
 	mr moviesrepo.Repo
-	ur userrepo.Repo
+	ur usersrepo.Repo
 }
 
 // NewMoviesController instantiates User Controller
-func NewMoviesController(br moviesrepo.Repo, us userrepo.Repo) MoviesController {
+func NewMoviesController(br moviesrepo.Repo, us usersrepo.Repo) MoviesController {
 	return &moviesController{mr: br, ur: us}
 }
 
@@ -53,7 +53,7 @@ func (ctl *moviesController) inputToMovie(input movies.AddMovieInput, c *gin.Con
 		return nil, err
 	}
 
-	currentUser := c.MustGet("user").(user.User)
+	currentUser := c.MustGet("user").(users.User)
 	return &movies.Movie{
 		Name:        input.Name,
 		Description: input.Description,
@@ -99,7 +99,7 @@ func (ctl *moviesController) UpdateMovie(c *gin.Context) {
 		return
 	}
 
-	currentUser := c.MustGet("user").(user.User)
+	currentUser := c.MustGet("user").(users.User)
 	movie, err := ctl.mr.GetMovieById(movieId)
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, "Error getting movie info", err.Error())
@@ -142,7 +142,7 @@ func (ctl *moviesController) DeleteMovie(c *gin.Context) {
 		return
 	}
 
-	currentUser := c.MustGet("user").(user.User)
+	currentUser := c.MustGet("user").(users.User)
 	movie, err := ctl.mr.GetMovieById(movieId)
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, "Error getting movie info", err.Error())
@@ -166,7 +166,7 @@ func (ctl *moviesController) WatchMovie(c *gin.Context) {
 		return
 	}
 
-	currentUser := c.MustGet("email").(user.User)
+	currentUser := c.MustGet("email").(users.User)
 	movie, err := ctl.mr.GetMovieById(movieId)
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, "Error getting movie info", err.Error())
@@ -193,7 +193,7 @@ func (ctl *moviesController) ReviewMovie(c *gin.Context) {
 		return
 	}
 
-	currentUser := c.MustGet("user").(user.User)
+	currentUser := c.MustGet("user").(users.User)
 
 	movie, err := ctl.mr.GetMovieById(movieId)
 	if err != nil {
@@ -227,7 +227,7 @@ func (ctl *moviesController) ReviewMovie(c *gin.Context) {
 
 }
 
-func (ctl *moviesController) reviewMovieInputToReviewMovieEntry(input movies.ReviewMovieInput, user user.User, movie *movies.Movie) (*movies.ReviewMovieEntry, error) {
+func (ctl *moviesController) reviewMovieInputToReviewMovieEntry(input movies.ReviewMovieInput, user users.User, movie *movies.Movie) (*movies.ReviewMovieEntry, error) {
 	if err := conform.Struct(context.Background(), &input); err != nil {
 		return nil, err
 	}

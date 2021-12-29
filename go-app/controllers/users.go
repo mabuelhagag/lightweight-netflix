@@ -3,8 +3,8 @@ package controllers
 import (
 	"context"
 	"github.com/gin-gonic/gin"
-	userdefinition "go-app/definitions/user"
-	"go-app/repositories/userrepo"
+	userdefinition "go-app/definitions/users"
+	"go-app/repositories/usersrepo"
 	"log"
 	"net/http"
 )
@@ -16,11 +16,11 @@ type UserController interface {
 }
 
 type userController struct {
-	br userrepo.Repo
+	br usersrepo.Repo
 }
 
 // NewUserController instantiates User Controller
-func NewUserController(br userrepo.Repo) UserController {
+func NewUserController(br usersrepo.Repo) UserController {
 	return &userController{br: br}
 }
 

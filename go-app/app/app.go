@@ -6,7 +6,7 @@ import (
 	"go-app/configs"
 	"go-app/middlewares"
 	"go-app/repositories/moviesrepo"
-	"go-app/repositories/userrepo"
+	"go-app/repositories/usersrepo"
 	"log"
 	"net/http"
 
@@ -45,7 +45,7 @@ func Run() {
 	/*
 		====== Setup repositories =======
 	*/
-	userRepo := userrepo.NewUserRepo(mongoDB)
+	userRepo := usersrepo.NewUsersRepo(mongoDB)
 	moviesRepo := moviesrepo.NewMoviesRepo(mongoDB)
 
 	/*
