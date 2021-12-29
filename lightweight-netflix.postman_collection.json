@@ -154,6 +154,30 @@
 					"response": []
 				},
 				{
+					"name": "List by date [descending]",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/movies/sort/date/asc/",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"movies",
+								"sort",
+								"date",
+								"asc",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "List by rating [ascending]",
 					"request": {
 						"auth": {
