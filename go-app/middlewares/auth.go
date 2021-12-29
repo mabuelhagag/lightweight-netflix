@@ -1,7 +1,9 @@
 package middlewares
 
 import (
+	"github.com/kamva/mgm/v3"
 	"go-app/controllers"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"go-app/definitions/user"
 	"net/http"
@@ -37,7 +39,15 @@ func Authorize() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("email", claims.Email)
+		currentUser := &user.User{}
+		err = mgm.Coll(currentUser).First(bson.M{"email": claims.Email}, currentUser)
+		if err != nil {
+			controllers.HTTPRes(c, http.StatusUnauthorized, "Error while getting user", err.Error())
+			c.Abort()
+			return
+		}
+
+		c.Set("user", currentUser)
 
 		c.Next()
 
