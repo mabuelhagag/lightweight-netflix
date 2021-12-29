@@ -1,6 +1,7 @@
 package movies
 
 import (
+	"github.com/kamva/mgm/v3"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"mime/multipart"
 	"time"
@@ -8,25 +9,23 @@ import (
 
 // Movie struct
 type Movie struct {
-	ID          primitive.ObjectID `bson:"_id,omitempty"`
-	Name        string             `bson:"name,omitempty"`
-	Description string             `bson:"description,omitempty"`
-	Date        time.Time          `bson:"date,omitempty"`
-	Cover       string             `bson:"cover,omitempty"`
-	AddedBy     primitive.ObjectID `bson:"added_by,omitempty"`
+	mgm.DefaultModel `bson:",inline"`
+	Name             string             `bson:"name,omitempty"`
+	Description      string             `bson:"description,omitempty"`
+	Date             time.Time          `bson:"date,omitempty"` // TODO: use string to parse date from it
+	AddedBy          primitive.ObjectID `bson:"added_by,omitempty"`
 }
 
 type AddMovieInput struct {
 	Name        string    `json:"name" mod:"trim,title" binding:"required"`
 	Description string    `json:"description" mod:"trim" binding:"required"`
-	Date        time.Time `json:"date"`
+	Date        time.Time `json:"date"` // TODO: use string to parse date from it
 }
 type AddMovieOutput struct {
-	Name        string             `bson:"name"`
-	Description string             `bson:"description"`
-	Date        time.Time          `bson:"date"`
-	Cover       string             `bson:"cover"`
-	AddedBy     primitive.ObjectID `bson:"added_by"`
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Date        time.Time `json:"date"` // TODO: use string to parse date to it
 }
 type UploadCoverInput struct {
 	Cover *multipart.FileHeader `form:"cover" binding:"required"`

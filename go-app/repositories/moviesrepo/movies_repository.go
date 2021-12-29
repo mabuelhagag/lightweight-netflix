@@ -3,6 +3,7 @@ package moviesrepo
 import (
 	"context"
 	"errors"
+	"github.com/kamva/mgm/v3"
 	"go-app/definitions/movies"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -33,16 +34,11 @@ func NewMoviesRepo(db *mongo.Client) Repo {
 }
 
 func (b *moviesRepo) AddMovie(movie *movies.Movie) (*movies.Movie, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel() // releases resources if CreateUser completes before timeout elapses
-	collection := b.db.Database("lw-netflix").Collection("movies")
-
-	result, err := collection.InsertOne(ctx, *movie)
-
-	if err := collection.FindOne(ctx, bson.D{{"_id", result.InsertedID}}).Decode(&movie); err != nil {
-		return nil, errors.New("Unable to get movie")
+	if err := mgm.Coll(movie).Create(movie); err != nil {
+		return nil, err
 	}
-	return movie, err
+
+	return movie, nil
 }
 
 func (b *moviesRepo) GetMovieById(id string) (*movies.Movie, error) {

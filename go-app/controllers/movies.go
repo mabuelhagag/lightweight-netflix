@@ -34,18 +34,20 @@ func NewMoviesController(br moviesrepo.Repo, us usersrepo.Repo) MoviesController
 func (ctl *moviesController) AddMovie(c *gin.Context) {
 	var movieInput movies.AddMovieInput
 	if err := c.ShouldBindJSON(&movieInput); err != nil {
-		HTTPRes(c, http.StatusBadRequest, "Error Validation", err.Error())
+		HTTPRes(c, http.StatusBadRequest, "Validation Error", err.Error())
 		return
 	}
 	movie, err := ctl.inputToMovie(movieInput, c)
 	if err != nil {
-		HTTPRes(c, http.StatusBadRequest, "Error Validation", err.Error())
+		HTTPRes(c, http.StatusBadRequest, "Validation Error", err.Error())
 	}
 	movie, err = ctl.mr.AddMovie(movie)
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, "Failed while adding movie", err.Error())
 	}
-	HTTPRes(c, http.StatusOK, "Movie added", movie)
+
+	output := ctl.movieToOutput(movie)
+	HTTPRes(c, http.StatusOK, "Movie added", output)
 }
 
 func (ctl *moviesController) inputToMovie(input movies.AddMovieInput, c *gin.Context) (*movies.Movie, error) {
@@ -53,13 +55,21 @@ func (ctl *moviesController) inputToMovie(input movies.AddMovieInput, c *gin.Con
 		return nil, err
 	}
 
-	currentUser := c.MustGet("user").(users.User)
+	currentUser := c.MustGet("user").(*users.User)
 	return &movies.Movie{
 		Name:        input.Name,
 		Description: input.Description,
 		Date:        input.Date,
 		AddedBy:     currentUser.ID,
 	}, nil
+}
+func (ctl *moviesController) movieToOutput(movie *movies.Movie) *movies.AddMovieOutput {
+	return &movies.AddMovieOutput{
+		ID:          movie.ID.Hex(),
+		Name:        movie.Name,
+		Description: movie.Description,
+		Date:        movie.Date,
+	}
 }
 
 func (ctl *moviesController) UploadCover(c *gin.Context) {
