@@ -48,15 +48,18 @@ func (m *WatchedMovieEntry) CollectionName() string {
 }
 
 type ReviewMovieInput struct {
-	Rate   uint8  `json:"rate" binding:"required,gte=1,lte=5"`
+	Rating uint8  `json:"rating" binding:"required,gte=1,lte=5"`
 	Review string `json:"review" mod:"trim"`
 }
 
 type ReviewMovieEntry struct {
-	ID      primitive.ObjectID `bson:"_id,omitempty"`
-	MovieID primitive.ObjectID `bson:"movie_id"`
-	UserId  primitive.ObjectID `bson:"user_id"`
-	Rate    uint8              `bson:"rate"`
-	Review  string             `bson:"review"`
-	Time    time.Time          `bson:"time"`
+	mgm.DefaultModel `bson:",inline"`
+	MovieID          primitive.ObjectID `bson:"movie_id"`
+	UserId           primitive.ObjectID `bson:"user_id"`
+	Rating           uint8              `bson:"rating"`
+	Review           string             `bson:"review"`
+}
+
+func (m *ReviewMovieEntry) CollectionName() string {
+	return "reviews"
 }

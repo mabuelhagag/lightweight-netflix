@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/kamva/mgm/v3"
 	"go-app/definitions/movies"
+	"go-app/definitions/users"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -19,7 +20,7 @@ type Repo interface {
 	UpdateMovie(movie *movies.Movie, id string) (*movies.Movie, error)
 	DeleteMovie(id string) error
 	AddToWatchedList(watchEntry *movies.WatchedMovieEntry) error
-	DidWatchMovie(movieId string, userID string) (bool, error)
+	DidWatchMovie(movie *movies.Movie, user *users.User) (bool, error)
 	ReviewMovie(reviewEntry *movies.ReviewMovieEntry) error
 }
 type moviesRepo struct {
@@ -102,43 +103,43 @@ func (b *moviesRepo) AddToWatchedList(watchEntry *movies.WatchedMovieEntry) erro
 				bson.D{{"movie_id", bson.D{{"$eq", watchEntry.MovieID}}}},
 			}},
 	}
-	_ = mgm.Coll(watchEntry).First(filter, watchEntry)
-	err := mgm.Coll(watchEntry).Update(watchEntry, mgm.UpsertTrueOption())
+	err := mgm.Coll(watchEntry).First(filter, watchEntry)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			err := mgm.Coll(watchEntry).Create(watchEntry)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	err = mgm.Coll(watchEntry).Update(watchEntry)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (b *moviesRepo) DidWatchMovie(movieId string, userID string) (bool, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel() // releases resources if CreateUser completes before timeout elapses
-	collection := b.db.Database("lw-netflix").Collection("watched")
-
-	userObjectID, _ := primitive.ObjectIDFromHex(userID)
-	movieObjectID, _ := primitive.ObjectIDFromHex(movieId)
+func (b *moviesRepo) DidWatchMovie(movie *movies.Movie, user *users.User) (bool, error) {
+	watchEntry := &movies.WatchedMovieEntry{}
 	filter := bson.D{
 		{"$and",
 			bson.A{
-				bson.D{{"user_id", bson.D{{"$eq", userObjectID}}}},
-				bson.D{{"movie_id", bson.D{{"$eq", movieObjectID}}}},
+				bson.D{{"user_id", bson.D{{"$eq", user.ID}}}},
+				bson.D{{"movie_id", bson.D{{"$eq", movie.ID}}}},
 			}},
 	}
-	var watchedEntry movies.WatchedMovieEntry
-	err := collection.FindOne(ctx, filter).Decode(&watchedEntry)
+	err := mgm.Coll(watchEntry).First(filter, watchEntry)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return false, errors.New("User hasn't watched the movie yet")
+			return false, nil
 		}
 		return false, err
 	}
+
 	return true, nil
 }
 
 func (b *moviesRepo) ReviewMovie(reviewEntry *movies.ReviewMovieEntry) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel() // releases resources if CreateUser completes before timeout elapses
-	collection := b.db.Database("lw-netflix").Collection("reviews")
 
 	filter := bson.D{
 		{"$and",
@@ -147,10 +148,21 @@ func (b *moviesRepo) ReviewMovie(reviewEntry *movies.ReviewMovieEntry) error {
 				bson.D{{"movie_id", bson.D{{"$eq", reviewEntry.MovieID}}}},
 			}},
 	}
-	opts := options.Update().SetUpsert(true)
-	reviewEntry.Time = time.Now()
-	update := bson.D{{"$set", reviewEntry}}
-	_, err := collection.UpdateOne(ctx, filter, update, opts)
-	return err
+	foundEntry := &movies.ReviewMovieEntry{}
+	err := mgm.Coll(foundEntry).First(filter, foundEntry)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			err := mgm.Coll(reviewEntry).Create(reviewEntry)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	reviewEntry.ID = foundEntry.ID
+	err = mgm.Coll(reviewEntry).Update(reviewEntry)
+	if err != nil {
+		return err
+	}
+	return nil
 
 }

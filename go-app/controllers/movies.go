@@ -8,8 +8,8 @@ import (
 	"go-app/definitions/users"
 	"go-app/repositories/moviesrepo"
 	"go-app/repositories/usersrepo"
+	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
-	"time"
 )
 
 // MoviesController interface
@@ -200,25 +200,30 @@ func (ctl *moviesController) WatchMovie(c *gin.Context) {
 func (ctl *moviesController) ReviewMovie(c *gin.Context) {
 	var reviewInput movies.ReviewMovieInput
 	if err := c.ShouldBindJSON(&reviewInput); err != nil {
-		HTTPRes(c, http.StatusBadRequest, "Error Validation", err.Error())
+		HTTPRes(c, http.StatusBadRequest, "Validation Error", err.Error())
 		return
 	}
 
 	movieId := c.Param("id")
 	if movieId == "" {
-		HTTPRes(c, http.StatusBadRequest, "Error Validation", "Movie ID not provided")
+		HTTPRes(c, http.StatusBadRequest, "Validation Error", "Movie ID not provided")
 		return
 	}
 
-	currentUser := c.MustGet("user").(users.User)
+	currentUser := c.MustGet("user").(*users.User)
 
-	movie, err := ctl.mr.GetMovieById(movieId)
+	movie := &movies.Movie{}
+	err := mgm.Coll(movie).FindByID(movieId, movie)
 	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			HTTPRes(c, http.StatusNotFound, "Movie not found", nil)
+			return
+		}
 		HTTPRes(c, http.StatusInternalServerError, "Error getting movie info", err.Error())
 		return
 	}
 
-	watchedMovie, err := ctl.mr.DidWatchMovie(movieId, currentUser.ID.Hex())
+	watchedMovie, err := ctl.mr.DidWatchMovie(movie, currentUser)
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, "Error while checking watched movie", err.Error())
 		return
@@ -230,7 +235,7 @@ func (ctl *moviesController) ReviewMovie(c *gin.Context) {
 
 	reviewEntry, err := ctl.reviewMovieInputToReviewMovieEntry(reviewInput, currentUser, movie)
 	if err != nil {
-		HTTPRes(c, http.StatusBadRequest, "Error Validation", err.Error())
+		HTTPRes(c, http.StatusBadRequest, "Validation Error", err.Error())
 		return
 	}
 
@@ -244,7 +249,7 @@ func (ctl *moviesController) ReviewMovie(c *gin.Context) {
 
 }
 
-func (ctl *moviesController) reviewMovieInputToReviewMovieEntry(input movies.ReviewMovieInput, user users.User, movie *movies.Movie) (*movies.ReviewMovieEntry, error) {
+func (ctl *moviesController) reviewMovieInputToReviewMovieEntry(input movies.ReviewMovieInput, user *users.User, movie *movies.Movie) (*movies.ReviewMovieEntry, error) {
 	if err := conform.Struct(context.Background(), &input); err != nil {
 		return nil, err
 	}
@@ -252,8 +257,7 @@ func (ctl *moviesController) reviewMovieInputToReviewMovieEntry(input movies.Rev
 	return &movies.ReviewMovieEntry{
 		MovieID: movie.ID,
 		UserId:  user.ID,
-		Rate:    input.Rate,
+		Rating:  input.Rating,
 		Review:  input.Review,
-		Time:    time.Now(),
 	}, nil
 }
