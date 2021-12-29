@@ -28,31 +28,28 @@ func (ctl *userController) RegisterUser(c *gin.Context) {
 	// Read user input
 	var userInput userdefinition.UserInput
 	if err := c.ShouldBindJSON(&userInput); err != nil {
-		HTTPRes(c, http.StatusBadRequest, "Error Validation", err.Error())
+		HTTPRes(c, http.StatusBadRequest, "Validation Error", err.Error())
 		return
 	}
-	b, err := ctl.inputToUser(userInput, c)
+	b, err := ctl.inputToUser(userInput)
 	if err != nil {
-		HTTPRes(c, http.StatusBadRequest, "Error Validation", nil)
+		HTTPRes(c, http.StatusBadRequest, "Validation Error", err.Error())
 		return
 	}
 
 	// Create user
 	// If an Error Occurs while creating return the error
 	if _, err := ctl.br.CreateUser(b); err != nil {
-		HTTPRes(c, http.StatusInternalServerError, err.Error(), nil)
+		HTTPRes(c, http.StatusInternalServerError, "Failed while registering user", err.Error())
 		return
 	}
 
-	// If user is successfully created return a structured Response
-	//userOutput := ctl.mapToUserOutput(&b)
 	HTTPRes(c, http.StatusOK, "User Registered", nil)
 }
 
 // Private Methods
-func (ctl *userController) inputToUser(input userdefinition.UserInput, c *gin.Context) (*userdefinition.User, error) {
+func (ctl *userController) inputToUser(input userdefinition.UserInput) (*userdefinition.User, error) {
 	if err := conform.Struct(context.Background(), &input); err != nil {
-		HTTPRes(c, http.StatusBadRequest, err.Error(), nil)
 		return nil, err
 	}
 
