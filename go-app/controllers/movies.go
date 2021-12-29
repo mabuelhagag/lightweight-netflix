@@ -8,6 +8,7 @@ import (
 	"go-app/definitions/users"
 	"go-app/repositories/moviesrepo"
 	"go-app/repositories/usersrepo"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"net/http"
 )
@@ -20,6 +21,7 @@ type MoviesController interface {
 	DeleteMovie(c *gin.Context)
 	WatchMovie(c *gin.Context)
 	ReviewMovie(c *gin.Context)
+	ListWatchedMovies(c *gin.Context)
 }
 
 type moviesController struct {
@@ -260,4 +262,16 @@ func (ctl *moviesController) reviewMovieInputToReviewMovieEntry(input movies.Rev
 		Rating:  input.Rating,
 		Review:  input.Review,
 	}, nil
+}
+
+func (ctl *moviesController) ListWatchedMovies(c *gin.Context) {
+
+	currentUser := c.MustGet("user").(*users.User)
+
+	// TODO: aggregate to get movie details
+	watchedMovies := []movies.WatchedMovieEntry{}
+	_ = mgm.Coll(&movies.WatchedMovieEntry{}).SimpleFind(&watchedMovies, bson.M{"user_id": currentUser.ID})
+
+	HTTPRes(c, http.StatusOK, "Watched Movies", watchedMovies)
+
 }

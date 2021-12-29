@@ -82,7 +82,7 @@ func Run() {
 	}
 	watchedMovies := r.Group("/movies/watched/").Use(middlewares.Authorize())
 	{
-		watchedMovies.GET("", authorized)
+		watchedMovies.GET("", moviesCtl.ListWatchedMovies)
 	}
 	movie := r.Group("/movie/").Use(middlewares.Authorize())
 	{
