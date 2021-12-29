@@ -157,8 +157,9 @@ func (ctl *moviesController) DeleteMovie(c *gin.Context) {
 		return
 	}
 
-	currentUser := c.MustGet("user").(users.User)
-	movie, err := ctl.mr.GetMovieById(movieId)
+	currentUser := c.MustGet("user").(*users.User)
+	movie := &movies.Movie{}
+	err := mgm.Coll(movie).FindByID(movieId, movie)
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, "Error getting movie info", err.Error())
 		return
@@ -167,7 +168,7 @@ func (ctl *moviesController) DeleteMovie(c *gin.Context) {
 		HTTPRes(c, http.StatusForbidden, "Error updating movie info", "Movie is not owned by current user")
 		return
 	}
-	err = ctl.mr.DeleteMovie(movieId)
+	err = mgm.Coll(movie).Delete(movie)
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, "Error deleting movie", err.Error())
 		return
