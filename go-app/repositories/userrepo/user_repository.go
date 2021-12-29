@@ -3,6 +3,7 @@ package userrepo
 import (
 	"context"
 	"errors"
+	"github.com/kamva/mgm/v3"
 	"go-app/definitions/user"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -46,28 +47,9 @@ func (b *userRepo) GetUser(email string) (*user.User, error) {
 }
 
 func (b *userRepo) CreateUser(user *user.User) (*user.User, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel() // releases resources if CreateUser completes before timeout elapses
-	collection := b.db.Database("lw-netflix").Collection("users")
-	var result bson.M
-	if err := collection.FindOne(ctx, bson.D{{"email", user.Email}}).Decode(&result); err != nil {
-		if err != nil {
-			if err != mongo.ErrNoDocuments {
-				return nil, errors.New("Unable to check for user existance")
-			}
-		}
-
-	}
-	if result != nil {
-		return nil, errors.New("User already exists")
-	}
-
-	bytes, _ := bcrypt.GenerateFromPassword([]byte(user.Password), 14)
-	user.Password = string(bytes)
-	_, err := collection.InsertOne(ctx, *user)
-
+	err := mgm.Coll(user).Create(user)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	return user, nil
 }

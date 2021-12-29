@@ -3,24 +3,49 @@ package user
 import (
 	"errors"
 	"github.com/dgrijalva/jwt-go"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"github.com/kamva/mgm/v3"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/crypto/bcrypt"
 	"time"
 )
 
 // User struct
 type User struct {
-	ID       primitive.ObjectID `bson:"_id,omitempty"`
-	FullName string             `bson:"name"`
-	Age      uint8              `bson:"age"`
-	Email    string             `bson:"email"`
-	Password string             `bson:"password"`
+	mgm.DefaultModel `bson:",inline"`
+	FullName         string `bson:"name"`
+	Age              uint8  `bson:"age"`
+	Email            string `bson:"email"`
+	Password         string `bson:"password"`
 }
 
-type ProfileOutput struct {
-	ID       string `json:"id"`
-	FullName string `json:"full_name"`
-	Age      uint8  `json:"age"`
-	Email    string `json:"email"`
+func (model *User) Saving() error {
+
+	// Check if the user exists; TODO: create email index in users collection
+	user := &User{}
+	err := mgm.Coll(model).First(bson.M{"email": model.Email}, user)
+	if err != nil {
+		if err != mongo.ErrNoDocuments {
+			return errors.New("unable to check for user existence")
+		}
+
+	}
+	if user.Email != "" {
+		return errors.New("email already used by another user")
+	}
+
+	// Hash password
+	bytes, err := bcrypt.GenerateFromPassword([]byte(model.Password), 14)
+	if err != nil {
+		return err
+	}
+	model.Password = string(bytes)
+
+	// Call the DefaultModel Creating hook
+	if err := model.DefaultModel.Creating(); err != nil {
+		return err
+	}
+	return nil
 }
 
 // UserInput represents createUser body format
