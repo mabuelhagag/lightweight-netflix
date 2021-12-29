@@ -77,8 +77,8 @@ func Run() {
 	r.POST("/users/login/", userCtl.LoginUser)
 	movies := r.Group("/movies/")
 	{
-		movies.GET("", authorized)
-		movies.GET("sort/:by/:direction/", authorized)
+		movies.GET("", moviesCtl.ListMovies)
+		movies.GET("sort/:by/:direction/", moviesCtl.ListMovies)
 	}
 	watchedMovies := r.Group("/movies/watched/").Use(middlewares.Authorize())
 	{

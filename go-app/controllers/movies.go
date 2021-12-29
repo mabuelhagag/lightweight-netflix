@@ -10,7 +10,9 @@ import (
 	"go-app/repositories/usersrepo"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
+	"strings"
 )
 
 // MoviesController interface
@@ -22,6 +24,7 @@ type MoviesController interface {
 	WatchMovie(c *gin.Context)
 	ReviewMovie(c *gin.Context)
 	ListWatchedMovies(c *gin.Context)
+	ListMovies(c *gin.Context)
 }
 
 type moviesController struct {
@@ -273,5 +276,45 @@ func (ctl *moviesController) ListWatchedMovies(c *gin.Context) {
 	_ = mgm.Coll(&movies.WatchedMovieEntry{}).SimpleFind(&watchedMovies, bson.M{"user_id": currentUser.ID})
 
 	HTTPRes(c, http.StatusOK, "Watched Movies", watchedMovies)
+
+}
+
+func (ctl *moviesController) checkValidParameter(value string, valid []string) bool {
+	for _, el := range valid {
+		if el == value {
+			return true
+		}
+	}
+	return false
+}
+func (ctl *moviesController) ListMovies(c *gin.Context) {
+	sortBy := strings.ToLower(c.Param("by"))
+	direction := strings.ToLower(c.Param("direction"))
+
+	if sortBy == "" {
+		if direction != "" {
+			HTTPRes(c, http.StatusBadRequest, "Validation Error", "Invalid soring method")
+			return
+		}
+		sortBy = "name"
+		direction = "desc"
+	}
+	if ctl.checkValidParameter(sortBy, []string{"name", "date", "rating"}) == false ||
+		ctl.checkValidParameter(direction, []string{"asc", "desc"}) == false {
+		HTTPRes(c, http.StatusBadRequest, "Validation Error", "Invalid soring method")
+		return
+	}
+	var sortByOption int8
+	if direction == "asc" {
+		sortByOption = 1
+	} else {
+		sortByOption = -1
+	}
+
+	results := []movies.Movie{}
+	opts := options.Find().SetSort(bson.D{{sortBy, sortByOption}})
+	_ = mgm.Coll(&movies.Movie{}).SimpleFind(&results, bson.D{}, opts)
+
+	HTTPRes(c, http.StatusOK, "List of movies", results)
 
 }
