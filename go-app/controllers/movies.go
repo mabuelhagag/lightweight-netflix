@@ -101,18 +101,19 @@ func (ctl *moviesController) UploadCover(c *gin.Context) {
 func (ctl *moviesController) UpdateMovie(c *gin.Context) {
 	var movieInput movies.UpdateMovieInput
 	if err := c.ShouldBindJSON(&movieInput); err != nil {
-		HTTPRes(c, http.StatusBadRequest, "Error Validation", err.Error())
+		HTTPRes(c, http.StatusBadRequest, "Validation Error", err.Error())
 		return
 	}
 
 	movieId := c.Param("id")
 	if movieId == "" {
-		HTTPRes(c, http.StatusBadRequest, "Error Validation", "Movie ID not provided")
+		HTTPRes(c, http.StatusBadRequest, "Validation Error", "Movie ID not provided")
 		return
 	}
 
-	currentUser := c.MustGet("user").(users.User)
-	movie, err := ctl.mr.GetMovieById(movieId)
+	currentUser := c.MustGet("user").(*users.User)
+	movie := &movies.Movie{}
+	err := mgm.Coll(movie).FindByID(movieId, movie)
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, "Error getting movie info", err.Error())
 		return
@@ -121,30 +122,32 @@ func (ctl *moviesController) UpdateMovie(c *gin.Context) {
 		HTTPRes(c, http.StatusForbidden, "Error updating movie info", "Movie is not owned by current user")
 		return
 	}
-	movieUpdate, err := ctl.updateMovieInputToMovie(movieInput)
+	err = ctl.updateMovieInputToMovie(movieInput, movie)
 	if err != nil {
-		HTTPRes(c, http.StatusBadRequest, "Error Validation", err.Error())
+		HTTPRes(c, http.StatusBadRequest, "Validation Error", err.Error())
 		return
 	}
-	movie, err = ctl.mr.UpdateMovie(movieUpdate, movieId)
 
+	err = mgm.Coll(movie).Update(movie)
 	if err != nil {
-		HTTPRes(c, http.StatusInternalServerError, "Failed while adding movie", err.Error())
+		HTTPRes(c, http.StatusInternalServerError, "Failed while updating movie", err.Error())
 		return
 	}
-	HTTPRes(c, http.StatusOK, "Movie Updated", movie)
+
+	_ = mgm.Coll(movie).FindByID(movieId, movie)
+	output := ctl.movieToOutput(movie)
+	HTTPRes(c, http.StatusOK, "Movie Updated", output)
 }
 
-func (ctl *moviesController) updateMovieInputToMovie(input movies.UpdateMovieInput) (*movies.Movie, error) {
+func (ctl *moviesController) updateMovieInputToMovie(input movies.UpdateMovieInput, output *movies.Movie) error {
 	if err := conform.Struct(context.Background(), &input); err != nil {
-		return nil, err
+		return err
 	}
+	output.Name = input.Name
+	output.Description = input.Description
+	output.Date = input.Date
 
-	return &movies.Movie{
-		Name:        input.Name,
-		Description: input.Description,
-		Date:        input.Date,
-	}, nil
+	return nil
 }
 
 func (ctl *moviesController) DeleteMovie(c *gin.Context) {
