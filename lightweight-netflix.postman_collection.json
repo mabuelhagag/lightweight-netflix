@@ -84,6 +84,9 @@
 				{
 					"name": "List by name [ascending]",
 					"request": {
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
@@ -105,6 +108,9 @@
 				{
 					"name": "List by name [descending]",
 					"request": {
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
@@ -126,6 +132,9 @@
 				{
 					"name": "List by date [ascending]",
 					"request": {
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
@@ -147,6 +156,9 @@
 				{
 					"name": "List by rating [ascending]",
 					"request": {
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
@@ -168,6 +180,9 @@
 				{
 					"name": "List by rating [descending]",
 					"request": {
+						"auth": {
+							"type": "noauth"
+						},
 						"method": "GET",
 						"header": [],
 						"url": {
