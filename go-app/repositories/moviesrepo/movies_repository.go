@@ -94,9 +94,6 @@ func (b *moviesRepo) DeleteMovie(id string) error {
 }
 
 func (b *moviesRepo) AddToWatchedList(watchEntry *movies.WatchedMovieEntry) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel() // releases resources if CreateUser completes before timeout elapses
-	collection := b.db.Database("lw-netflix").Collection("watched")
 
 	filter := bson.D{
 		{"$and",
@@ -105,12 +102,12 @@ func (b *moviesRepo) AddToWatchedList(watchEntry *movies.WatchedMovieEntry) erro
 				bson.D{{"movie_id", bson.D{{"$eq", watchEntry.MovieID}}}},
 			}},
 	}
-	opts := options.Update().SetUpsert(true)
-	watchEntry.Time = time.Now()
-	update := bson.D{{"$set", watchEntry}}
-	_, err := collection.UpdateOne(ctx, filter, update, opts)
-	return err
-
+	_ = mgm.Coll(watchEntry).First(filter, watchEntry)
+	err := mgm.Coll(watchEntry).Update(watchEntry, mgm.UpsertTrueOption())
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (b *moviesRepo) DidWatchMovie(movieId string, userID string) (bool, error) {

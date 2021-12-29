@@ -38,10 +38,13 @@ type UpdateMovieInput struct {
 }
 
 type WatchedMovieEntry struct {
-	ID      primitive.ObjectID `bson:"_id,omitempty"`
-	MovieID primitive.ObjectID `bson:"movie_id"`
-	UserId  primitive.ObjectID `bson:"user_id"`
-	Time    time.Time          `bson:"time"`
+	mgm.DefaultModel `bson:",inline"`
+	MovieID          primitive.ObjectID `bson:"movie_id"`
+	UserId           primitive.ObjectID `bson:"user_id"`
+}
+
+func (m *WatchedMovieEntry) CollectionName() string {
+	return "watched"
 }
 
 type ReviewMovieInput struct {

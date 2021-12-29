@@ -182,8 +182,9 @@ func (ctl *moviesController) WatchMovie(c *gin.Context) {
 		return
 	}
 
-	currentUser := c.MustGet("email").(users.User)
-	movie, err := ctl.mr.GetMovieById(movieId)
+	currentUser := c.MustGet("user").(*users.User)
+	movie := &movies.Movie{}
+	err := mgm.Coll(movie).FindByID(movieId, movie)
 	if err != nil {
 		HTTPRes(c, http.StatusInternalServerError, "Error getting movie info", err.Error())
 		return
