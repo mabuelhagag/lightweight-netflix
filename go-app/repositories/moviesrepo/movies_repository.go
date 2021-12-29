@@ -16,7 +16,6 @@ import (
 // Repo Interface
 type Repo interface {
 	AddMovie(movie *movies.Movie) (*movies.Movie, error)
-	GetMovieById(id string) (*movies.Movie, error)
 	UpdateMovie(movie *movies.Movie, id string) (*movies.Movie, error)
 	DeleteMovie(id string) error
 	AddToWatchedList(watchEntry *movies.WatchedMovieEntry) error
@@ -42,21 +41,6 @@ func (b *moviesRepo) AddMovie(movie *movies.Movie) (*movies.Movie, error) {
 	return movie, nil
 }
 
-func (b *moviesRepo) GetMovieById(id string) (*movies.Movie, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel() // releases resources if CreateUser completes before timeout elapses
-	collection := b.db.Database("lw-netflix").Collection("movies")
-
-	var movie *movies.Movie
-	movieID, err := primitive.ObjectIDFromHex(id)
-	filter := bson.M{"_id": bson.M{"$eq": movieID}}
-	err = collection.FindOne(ctx, filter).Decode(&movie)
-	if err != nil {
-		return nil, errors.New("Unable to get movie")
-	}
-	return movie, err
-}
-
 func (b *moviesRepo) UpdateMovie(movie *movies.Movie, id string) (*movies.Movie, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel() // releases resources if CreateUser completes before timeout elapses
@@ -69,7 +53,7 @@ func (b *moviesRepo) UpdateMovie(movie *movies.Movie, id string) (*movies.Movie,
 	err = collection.FindOneAndUpdate(ctx, filter, update, opts).Decode(&movie)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, errors.New("Unable to get movie")
+			return nil, errors.New("unable to get movie")
 		}
 		return nil, err
 	}
@@ -87,7 +71,7 @@ func (b *moviesRepo) DeleteMovie(id string) error {
 	err = collection.FindOneAndDelete(ctx, filter).Decode(&movie)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return errors.New("Unable to get movie")
+			return errors.New("unable to get movie")
 		}
 		return err
 	}
