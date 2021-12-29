@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"github.com/kamva/mgm/v3"
 	"go-app/configs"
 	"go-app/middlewares"
 	"go-app/repositories/moviesrepo"
@@ -36,7 +37,7 @@ func Run() {
 	clientOptions := options.Client().ApplyURI(config.MongoDB.URI) // use env variables
 	// Connect to MongoDB
 	mongoDB, err := mongo.Connect(context.Background(), clientOptions)
-
+	err = mgm.SetDefaultConfig(nil, "lw-netflix", clientOptions)
 	if err != nil {
 		panic(err)
 	}
